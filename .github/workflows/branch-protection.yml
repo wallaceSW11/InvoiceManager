@@ -1,0 +1,141 @@
+name: Branch Protection Check
+
+# This workflow helps enforce branch protection by running checks on PRs
+# Configure these checks as required status checks in GitHub branch protection settings
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  # Prevents direct pushes to main
+  check-direct-push:
+    name: Check Direct Push to Main
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Fail on Direct Push
+        run: |
+          echo "::error::Direct pushes to main branch are not allowed!"
+          echo "::error::Please create a Pull Request instead."
+          echo ""
+          echo "How to fix this:"
+          echo "1. Create a new branch: git checkout -b feature/my-feature"
+          echo "2. Push to the new branch: git push origin feature/my-feature"
+          echo "3. Create a Pull Request on GitHub"
+          exit 1
+
+  # Basic validation for PRs
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [ -z "$PR_TITLE" ]; then
+            echo "::error::PR title cannot be empty"
+            exit 1
+          fi
+          echo "✅ PR title is valid: $PR_TITLE"
+
+      - name: Check PR description
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if [ -z "$PR_BODY" ]; then
+            echo "::warning::PR description is empty. Consider adding a description."
+          else
+            echo "✅ PR has description"
+          fi
+
+      - name: Check branch name
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "Branch name: $BRANCH_NAME"
+
+          # Recommend conventional branch names
+          if [[ "$BRANCH_NAME" =~ ^(feature|fix|hotfix|refactor|docs|test|chore)/ ]]; then
+            echo "✅ Branch name follows convention: $BRANCH_NAME"
+          else
+            echo "::warning::Branch name '$BRANCH_NAME' doesn't follow convention"
+            echo "::warning::Consider using: feature/, fix/, hotfix/, refactor/, docs/, test/, or chore/"
+          fi
+
+      - name: Check for merge conflicts
+        run: |
+          git fetch origin main
+          if git merge-tree $(git merge-base HEAD origin/main) origin/main HEAD | grep -q '<<<<<<<'; then
+            echo "::error::This PR has merge conflicts with main branch"
+            echo "::error::Please resolve conflicts before merging"
+            exit 1
+          fi
+          echo "✅ No merge conflicts detected"
+
+  # Enforce conventional commits (optional - can be enabled/disabled)
+  conventional-commits:
+    name: Check Conventional Commits
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages
+        run: |
+          echo "Checking commit messages for conventional commit format..."
+
+          COMMITS=$(git log origin/main..HEAD --pretty=format:"%s")
+
+          if [ -z "$COMMITS" ]; then
+            echo "::warning::No commits found in this PR"
+            exit 0
+          fi
+
+          # Check each commit message
+          ALL_VALID=true
+          while IFS= read -r commit_msg; do
+            # Conventional commit pattern: type(scope?): description
+            if [[ "$commit_msg" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\(.+\))?:\ .+ ]]; then
+              echo "✅ Valid: $commit_msg"
+            else
+              echo "::warning::Not conventional: $commit_msg"
+              ALL_VALID=false
+            fi
+          done <<< "$COMMITS"
+
+          if [ "$ALL_VALID" = false ]; then
+            echo ""
+            echo "::notice::Some commits don't follow conventional commit format"
+            echo "::notice::Format: type(scope): description"
+            echo "::notice::Types: feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert"
+            echo "::notice::This is a recommendation, not a blocker"
+          fi
+
+  # Summary job - makes it easier to require a single status check
+  branch-protection-summary:
+    name: Branch Protection Summary
+    runs-on: ubuntu-latest
+    needs: [pr-validation]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Summary
+        run: |
+          echo "✅ All branch protection checks passed!"
+          echo ""
+          echo "This PR is ready for review and merge."
