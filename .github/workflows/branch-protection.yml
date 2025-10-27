@@ -17,6 +17,7 @@ jobs:
     name: Check Direct Push to Main
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions: {}
 
     steps:
       - name: Fail on Direct Push
@@ -35,6 +36,8 @@ jobs:
     name: PR Validation
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -88,6 +91,8 @@ jobs:
     name: Check Conventional Commits
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -132,6 +137,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [pr-validation]
     if: github.event_name == 'pull_request'
+    permissions: {}
 
     steps:
       - name: Summary
