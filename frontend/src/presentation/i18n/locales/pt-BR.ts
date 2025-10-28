@@ -156,6 +156,7 @@ export default {
       title: 'Divisão',
       selectParticipants: 'Selecione os Participantes',
       autoSplitAll: 'Dividir Tudo Igualmente',
+      select: 'Selecionar',
       divideAll: 'Dividir para todos',
       difference: 'Diferença',
       search: 'Pesquisar compras',

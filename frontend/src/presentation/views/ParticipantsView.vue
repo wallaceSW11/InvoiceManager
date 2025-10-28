@@ -33,42 +33,38 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="dialog" max-width="500px">
-      <v-card>
-        <v-card-title>{{ editingParticipant ? t('participants.edit') : t('participants.new') }}</v-card-title>
-        <v-card-text>
-          <v-form ref="formRef" v-model="formValid">
-            <v-text-field
-              v-model="form.name"
-              :label="t('participants.name')"
-              :rules="[
-                v => !!v || t('participants.validation.nameRequired'),
-                v => v.length <= 20 || t('participants.validation.nameTooLong')
-              ]"
-              maxlength="20"
-              counter
-              required
-            />
-            <v-text-field
-              v-model="form.phoneNumber"
-              :label="t('participants.phoneNumber')"
-              :rules="[
-                v => !!v || t('participants.validation.phoneRequired'),
-                v => /^\d{10,11}$/.test(v.replace(/\D/g, '')) || t('participants.validation.phoneInvalid')
-              ]"
-              required
-            />
-          </v-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn @click="closeDialog">{{ t('common.cancel') }}</v-btn>
-          <v-btn color="primary" :disabled="!formValid" @click="saveParticipant">
-            {{ t('common.save') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ModalBase
+      v-model="dialog"
+      :title="editingParticipant ? t('participants.edit') : t('participants.new')"
+      :primary-button-text="t('common.save')"
+      :secondary-button-text="t('common.cancel')"
+      :disable-primary-button="!formValid"
+      max-width="500"
+      :primary-action="saveParticipant"
+    >
+      <v-form ref="formRef" v-model="formValid">
+        <v-text-field
+          v-model="form.name"
+          :label="t('participants.name')"
+          :rules="[
+            v => !!v || t('participants.validation.nameRequired'),
+            v => v.length <= 20 || t('participants.validation.nameTooLong')
+          ]"
+          maxlength="20"
+          counter
+          required
+        />
+        <v-text-field
+          v-model="form.phoneNumber"
+          :label="t('participants.phoneNumber')"
+          :rules="[
+            v => !!v || t('participants.validation.phoneRequired'),
+            v => /^\d{10,11}$/.test(v.replace(/\D/g, '')) || t('participants.validation.phoneInvalid')
+          ]"
+          required
+        />
+      </v-form>
+    </ModalBase>
   </div>
 </template>
 
@@ -77,6 +73,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
 import type { Participant } from '@/core/domain/entities'
+import ModalBase from '@/presentation/components/ModalBase.vue'
 
 const { t } = useI18n()
 const participantStore = useParticipantStore()
@@ -116,15 +113,6 @@ function openDialog(participant?: Participant) {
   dialog.value = true
 }
 
-function closeDialog() {
-  dialog.value = false
-  editingParticipant.value = null
-  form.value = {
-    name: '',
-    phoneNumber: ''
-  }
-}
-
 async function saveParticipant() {
   if (!formValid.value) return
 
@@ -141,7 +129,9 @@ async function saveParticipant() {
         phoneNumber: cleanPhone
       })
     }
-    closeDialog()
+    dialog.value = false
+    form.value = { name: '', phoneNumber: '' }
+    editingParticipant.value = null
   } catch (error) {
     console.error('Error saving participant:', error)
   }

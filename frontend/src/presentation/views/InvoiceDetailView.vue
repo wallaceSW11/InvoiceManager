@@ -8,6 +8,7 @@ import { useCardStore } from '@/presentation/stores/cardStore'
 import { SplitMode, InvoiceStatus } from '@/core/domain/enums'
 import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities'
 import { MoneyCalculator } from '@/shared/utils/MoneyCalculator'
+import MoneyInput from '@/presentation/components/common/MoneyInput.vue'
 
 
 const { t } = useI18n()
@@ -482,17 +483,13 @@ onMounted(async () => {
                   class="pa-1"
                 >
                   <div class="d-flex align-center gap-1">
-                    <v-text-field
+                    <MoneyInput
                       :model-value="getSplitValue(transaction.id, participant.id)"
-                      @update:model-value="(val) => updateSplitValue(transaction.id, participant.id, Number(val) || 0)"
-                      type="number"
+                      @update:model-value="(val) => updateSplitValue(transaction.id, participant.id, val)"
                       density="compact"
                       hide-details
                       variant="outlined"
-                      step="0.01"
-                      min="0"
                       :disabled="isCompleted"
-                      class="text-right"
                       style="max-width: 130px"
                     />
                     <v-tooltip location="top">
@@ -506,7 +503,7 @@ onMounted(async () => {
                           @click="autoSplitForParticipant(transaction, participant)"
                         />
                       </template>
-                      <span>{{ t('invoice.split.divideAll') }}</span>
+                      <span>{{ t('invoice.split.select') }}</span>
                     </v-tooltip>
                   </div>
                 </td>

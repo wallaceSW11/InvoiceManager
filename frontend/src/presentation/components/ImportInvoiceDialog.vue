@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
 import { CSVParser } from '@/infrastructure/parsers'
+import ModalBase from './ModalBase.vue'
 
 const { t } = useI18n()
 const cardStore = useCardStore()
@@ -47,6 +48,23 @@ async function importInvoice() {
   error.value = null
 
   try {
+    // Verifica se já existe uma fatura para o mesmo cartão e vencimento
+    const selectedDate = new Date(dueDate.value)
+    const existingInvoice = invoiceStore.invoices.find(invoice => {
+      const invoiceDueDate = new Date(invoice.dueDate)
+      return invoice.cardId === selectedCardId.value && 
+             invoiceDueDate.toDateString() === selectedDate.toDateString()
+    })
+
+    if (existingInvoice) {
+      // Se já existe, abre a fatura existente
+      emit('imported', existingInvoice.id)
+      setTimeout(() => {
+        resetDialog()
+      }, 100)
+      return
+    }
+
     const parser = new CSVParser()
     const content = await parser.readFile(file.value)
     const result = parser.parse(content)
@@ -67,15 +85,17 @@ async function importInvoice() {
     const newInvoice = await invoiceStore.createInvoice({
       cardId: selectedCardId.value,
       dueDate: new Date(dueDate.value),
-      transactions: result.transactions.map(t => ({
-        id: crypto.randomUUID(),
-        date: new Date(t.date),
-        description: t.description,
-        amount: t.amount,
-        splits: [],
-        createdAt: now,
-        updatedAt: now
-      }))
+      transactions: result.transactions
+        .map(t => ({
+          id: crypto.randomUUID(),
+          date: new Date(t.date),
+          description: t.description,
+          amount: t.amount,
+          splits: [],
+          createdAt: now,
+          updatedAt: now
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime()) // Ordena por data (mais antigo primeiro)
     })
 
     emit('imported', newInvoice.id)
@@ -103,80 +123,66 @@ cardStore.fetchCards()
 </script>
 
 <template>
-  <v-dialog v-model="dialog" max-width="600" persistent>
-    <v-card>
-      <v-card-title>
-        <span class="text-h5">{{ t('invoice.import.title') }}</span>
-      </v-card-title>
-
-      <v-card-text>
-        <v-form @submit.prevent="importInvoice">
-          <v-select
-            v-model="selectedCardId"
-            :items="cards"
-            item-title="nickname"
-            item-value="id"
-            :label="t('invoice.import.selectCard')"
-            :rules="[v => !!v || t('invoice.import.validation.cardRequired')]"
-            required
-            class="mb-4"
-          >
-            <template #item="{ props, item }">
-              <v-list-item v-bind="props">
-                <template #append>
-                  <span class="text-caption text-medium-emphasis">****{{ item.raw.lastFourDigits }}</span>
-                </template>
-              </v-list-item>
+  <ModalBase
+    v-model="dialog"
+    :title="t('invoice.import.title')"
+    :primary-button-text="t('invoice.import.import')"
+    :secondary-button-text="t('common.cancel')"
+    :disable-primary-button="!isValid"
+    primary-icon="mdi-file-upload"
+    max-width="600"
+    :primary-action="importInvoice"
+  >
+    <v-form @submit.prevent="importInvoice">
+      <v-select
+        v-model="selectedCardId"
+        :items="cards"
+        item-title="nickname"
+        item-value="id"
+        :label="t('invoice.import.selectCard')"
+        :rules="[v => !!v || t('invoice.import.validation.cardRequired')]"
+        required
+        class="mb-4"
+      >
+        <template #item="{ props, item }">
+          <v-list-item v-bind="props">
+            <template #append>
+              <span class="text-caption text-medium-emphasis">****{{ item.raw.lastFourDigits }}</span>
             </template>
-          </v-select>
+          </v-list-item>
+        </template>
+      </v-select>
 
-          <v-text-field
-            v-model="dueDate"
-            type="date"
-            :label="t('invoice.import.dueDate')"
-            :rules="[v => !!v || t('invoice.import.validation.dueDateRequired')]"
-            required
-            class="mb-4"
-          />
+      <v-text-field
+        v-model="dueDate"
+        type="date"
+        :label="t('invoice.import.dueDate')"
+        :rules="[v => !!v || t('invoice.import.validation.dueDateRequired')]"
+        required
+        class="mb-4"
+      />
 
-          <v-file-input
-            :model-value="file ? [file] : []"
-            @update:model-value="handleFileChange"
-            :label="t('invoice.import.selectFile')"
-            accept=".txt,text/plain"
-            prepend-icon="mdi-file-document-outline"
-            :rules="[v => !!v || t('invoice.import.validation.fileRequired')]"
-            required
-            show-size
-            class="mb-4"
-          />
+      <v-file-input
+        :model-value="file ? [file] : []"
+        @update:model-value="handleFileChange"
+        :label="t('invoice.import.selectFile')"
+        accept=".txt,text/plain"
+        prepend-icon="mdi-file-document-outline"
+        :rules="[v => !!v || t('invoice.import.validation.fileRequired')]"
+        required
+        show-size
+        class="mb-4"
+      />
 
-          <v-alert
-            v-if="error"
-            type="error"
-            variant="tonal"
-            closable
-            @click:close="error = null"
-          >
-            {{ error }}
-          </v-alert>
-        </v-form>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-btn @click="resetDialog" :disabled="loading">
-          {{ t('common.cancel') }}
-        </v-btn>
-        <v-spacer />
-        <v-btn
-          @click="importInvoice"
-          :disabled="!isValid"
-          :loading="loading"
-          color="primary"
-        >
-          {{ t('invoice.import.import') }}
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+      <v-alert
+        v-if="error"
+        type="error"
+        variant="tonal"
+        closable
+        @click:close="error = null"
+      >
+        {{ error }}
+      </v-alert>
+    </v-form>
+  </ModalBase>
 </template>

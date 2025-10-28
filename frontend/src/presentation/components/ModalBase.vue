@@ -14,15 +14,6 @@
       <v-card-actions class="pr-4 pb-4">
         <v-spacer />
         <v-btn
-          v-if="showSecondaryButton"
-          color="secondary"
-          :prepend-icon="secondaryIcon"
-          :disabled="disableSecondaryButton"
-          @click="handleSecondaryAction"
-        >
-          {{ secondaryButtonText }}
-        </v-btn>
-        <v-btn
           v-if="showPrimaryButton"
           color="primary"
           :prepend-icon="primaryIcon"
@@ -30,6 +21,15 @@
           @click="handlePrimaryAction"
         >
           {{ primaryButtonText }}
+        </v-btn>
+        <v-btn
+          v-if="showSecondaryButton"
+          color="secondary"
+          :prepend-icon="secondaryIcon"
+          :disabled="disableSecondaryButton"
+          @click="handleSecondaryAction"
+        >
+          {{ secondaryButtonText }}
         </v-btn>
       </v-card-actions>
     </v-card>

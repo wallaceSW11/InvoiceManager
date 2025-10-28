@@ -69,26 +69,22 @@
     </v-card>
 
     <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500">
-      <v-card>
-        <v-card-title>{{ t('invoice.list.deleteConfirm') }}</v-card-title>
-        <v-card-text v-if="invoiceToDelete">
-          {{ t('invoice.list.deleteMessage', { 
-            card: getCardName(invoiceToDelete.cardId),
-            date: formatDate(invoiceToDelete.dueDate)
-          }) }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn @click="deleteDialog = false">
-            {{ t('common.cancel') }}
-          </v-btn>
-          <v-btn color="error" @click="deleteInvoice">
-            {{ t('common.delete') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ModalBase
+      v-model="deleteDialog"
+      :title="t('invoice.list.deleteConfirm')"
+      :primary-button-text="t('common.delete')"
+      :secondary-button-text="t('common.cancel')"
+      primary-icon="mdi-delete"
+      max-width="500"
+      :primary-action="deleteInvoice"
+    >
+      <div v-if="invoiceToDelete">
+        {{ t('invoice.list.deleteMessage', { 
+          card: getCardName(invoiceToDelete.cardId),
+          date: formatDate(invoiceToDelete.dueDate)
+        }) }}
+      </div>
+    </ModalBase>
   </div>
 </template>
 
@@ -100,6 +96,7 @@ import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import { InvoiceStatus } from '@/core/domain/enums'
 import type { Invoice } from '@/core/domain/entities'
+import ModalBase from '@/presentation/components/ModalBase.vue'
 
 const { t } = useI18n()
 const router = useRouter()

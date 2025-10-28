@@ -36,43 +36,39 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="dialog" max-width="500px">
-      <v-card>
-        <v-card-title>{{ editingCard ? t('cards.edit') : t('cards.new') }}</v-card-title>
-        <v-card-text>
-          <v-form ref="formRef" v-model="formValid">
-            <v-text-field
-              v-model="form.nickname"
-              :label="t('cards.nickname')"
-              :rules="[
-                v => !!v || t('cards.validation.nicknameRequired'),
-                v => v.length <= 15 || t('cards.validation.nicknameTooLong')
-              ]"
-              maxlength="15"
-              counter
-              required
-            />
-            <v-text-field
-              v-model="form.lastFourDigits"
-              :label="t('cards.lastFourDigits')"
-              :rules="[
-                v => !!v || t('cards.validation.lastDigitsRequired'),
-                v => /^\d{4}$/.test(v) || t('cards.validation.lastDigitsInvalid')
-              ]"
-              maxlength="4"
-              required
-            />
-          </v-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn @click="closeDialog">{{ t('common.cancel') }}</v-btn>
-          <v-btn color="primary" :disabled="!formValid" @click="saveCard">
-            {{ t('common.save') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ModalBase
+      v-model="dialog"
+      :title="editingCard ? t('cards.edit') : t('cards.new')"
+      :primary-button-text="t('common.save')"
+      :secondary-button-text="t('common.cancel')"
+      :disable-primary-button="!formValid"
+      max-width="500"
+      :primary-action="saveCard"
+    >
+      <v-form ref="formRef" v-model="formValid">
+        <v-text-field
+          v-model="form.nickname"
+          :label="t('cards.nickname')"
+          :rules="[
+            v => !!v || t('cards.validation.nicknameRequired'),
+            v => v.length <= 15 || t('cards.validation.nicknameTooLong')
+          ]"
+          maxlength="15"
+          counter
+          required
+        />
+        <v-text-field
+          v-model="form.lastFourDigits"
+          :label="t('cards.lastFourDigits')"
+          :rules="[
+            v => !!v || t('cards.validation.lastDigitsRequired'),
+            v => /^\d{4}$/.test(v) || t('cards.validation.lastDigitsInvalid')
+          ]"
+          maxlength="4"
+          required
+        />
+      </v-form>
+    </ModalBase>
   </div>
 </template>
 
@@ -81,6 +77,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import type { Card } from '@/core/domain/entities'
+import ModalBase from '@/presentation/components/ModalBase.vue'
 
 const { t } = useI18n()
 const cardStore = useCardStore()
@@ -120,15 +117,6 @@ function openDialog(card?: Card) {
   dialog.value = true
 }
 
-function closeDialog() {
-  dialog.value = false
-  editingCard.value = null
-  form.value = {
-    nickname: '',
-    lastFourDigits: ''
-  }
-}
-
 async function saveCard() {
   if (!formValid.value) return
 
@@ -138,7 +126,9 @@ async function saveCard() {
     } else {
       await cardStore.createCard(form.value)
     }
-    closeDialog()
+    dialog.value = false
+    form.value = { nickname: '', lastFourDigits: '' }
+    editingCard.value = null
   } catch (error) {
     console.error('Error saving card:', error)
   }

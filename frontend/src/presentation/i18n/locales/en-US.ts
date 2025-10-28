@@ -156,6 +156,7 @@ export default {
       title: 'Split',
       selectParticipants: 'Select Participants',
       autoSplitAll: 'Split All Equally',
+      select: 'Select',
       divideAll: 'Divide to all',
       difference: 'Difference',
       search: 'Search purchases',
