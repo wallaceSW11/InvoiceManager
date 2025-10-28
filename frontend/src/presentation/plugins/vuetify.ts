@@ -1,5 +1,5 @@
 import '@mdi/font/css/materialdesignicons.css'
-import 'vuetify/styles'
+import 'vuetify/lib/styles/main.css'
 import { createVuetify } from 'vuetify'
 
 export default createVuetify({

@@ -14,7 +14,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
 
   const invoiceCount = computed(() => invoices.value.length)
   const openInvoice = computed(() => 
-    invoices.value.find(inv => inv.status === InvoiceStatus.OPEN)
+    invoices.value.find(inv => inv.status === InvoiceStatus.PENDING)
   )
 
   async function fetchInvoices() {
@@ -105,6 +105,18 @@ export const useInvoiceStore = defineStore('invoice', () => {
     currentInvoice.value = invoice
   }
 
+  async function completeInvoice(id: string) {
+    return updateInvoice(id, { status: InvoiceStatus.COMPLETED })
+  }
+
+  async function reopenInvoice(id: string) {
+    return updateInvoice(id, { status: InvoiceStatus.PENDING })
+  }
+
+  function getInvoiceById(id: string): Invoice | undefined {
+    return invoices.value.find(inv => inv.id === id)
+  }
+
   return {
     invoices,
     currentInvoice,
@@ -117,6 +129,9 @@ export const useInvoiceStore = defineStore('invoice', () => {
     createInvoice,
     updateInvoice,
     deleteInvoice,
-    setCurrentInvoice
+    setCurrentInvoice,
+    completeInvoice,
+    reopenInvoice,
+    getInvoiceById
   }
 })
