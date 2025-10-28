@@ -85,7 +85,7 @@ const navItems = computed(() => [
 
 function toggleTheme() {
   const nextTheme = theme.global.current.value.dark ? 'light' : 'dark'
-  theme.global.name.value = nextTheme
+  theme.change(nextTheme);
   if (storageAvailable) {
     localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
   }
@@ -112,7 +112,7 @@ if (storageAvailable) {
 
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY)
   if (savedTheme === 'light' || savedTheme === 'dark') {
-    theme.global.name.value = savedTheme
+    theme.change(savedTheme);
   }
 }
 </script>
