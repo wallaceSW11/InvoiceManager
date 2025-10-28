@@ -130,6 +130,10 @@ export default {
       parseErrors: 'Errors parsing file:',
       noTransactions: 'No transactions found in file',
       import: 'Import',
+      formatInfo: {
+        title: 'File format:',
+        description: 'The file must contain 3 columns separated by semicolon (;):'
+      },
       validation: {
         cardRequired: 'Card is required',
         dueDateRequired: 'Due date is required',

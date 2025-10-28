@@ -130,6 +130,10 @@ export default {
       parseErrors: 'Erros ao processar arquivo:',
       noTransactions: 'Nenhuma transação encontrada no arquivo',
       import: 'Importar',
+      formatInfo: {
+        title: 'Formato do arquivo:',
+        description: 'O arquivo deve conter 3 colunas separadas por ponto e vírgula (;):'
+      },
       validation: {
         cardRequired: 'Cartão é obrigatório',
         dueDateRequired: 'Data de vencimento é obrigatória',
