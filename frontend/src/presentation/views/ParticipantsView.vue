@@ -14,6 +14,9 @@
           :items="participantStore.participants"
           :loading="participantStore.loading"
         >
+          <template #item.phoneNumber="{ item }">
+            {{ formatPhone(item.phoneNumber) }}
+          </template>
           <template #item.actions="{ item }">
             <v-btn
               size="small"
@@ -59,8 +62,11 @@
           :label="t('participants.phoneNumber')"
           :rules="[
             v => !!v || t('participants.validation.phoneRequired'),
-            v => /^\d{10,11}$/.test(v.replace(/\D/g, '')) || t('participants.validation.phoneInvalid')
+            v => validatePhone(v) || t('participants.validation.phoneInvalid')
           ]"
+          @input="handlePhoneInput"
+          placeholder="(00) 00000-0000"
+          maxlength="15"
           required
         />
       </v-form>
@@ -72,11 +78,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
+import { usePhoneMask } from '@/presentation/composables/usePhoneMask'
 import type { Participant } from '@/core/domain/entities'
 import ModalBase from '@/presentation/components/ModalBase.vue'
 
 const { t } = useI18n()
 const participantStore = useParticipantStore()
+const { formatPhone, unformatPhone, validatePhone } = usePhoneMask()
 
 const headers = computed(() => [
   { title: t('participants.name'), key: 'name' },
@@ -101,7 +109,7 @@ function openDialog(participant?: Participant) {
     editingParticipant.value = participant
     form.value = {
       name: participant.name,
-      phoneNumber: participant.phoneNumber
+      phoneNumber: formatPhone(participant.phoneNumber)
     }
   } else {
     editingParticipant.value = null
@@ -113,11 +121,27 @@ function openDialog(participant?: Participant) {
   dialog.value = true
 }
 
+function handlePhoneInput(event: Event) {
+  const input = event.target as HTMLInputElement
+  const cursorPosition = input.selectionStart || 0
+  const oldLength = form.value.phoneNumber.length
+  
+  form.value.phoneNumber = formatPhone(input.value)
+  
+  // Ajusta a posição do cursor após a formatação
+  const newLength = form.value.phoneNumber.length
+  const diff = newLength - oldLength
+  
+  requestAnimationFrame(() => {
+    input.setSelectionRange(cursorPosition + diff, cursorPosition + diff)
+  })
+}
+
 async function saveParticipant() {
   if (!formValid.value) return
 
   try {
-    const cleanPhone = form.value.phoneNumber.replace(/\D/g, '')
+    const cleanPhone = unformatPhone(form.value.phoneNumber)
     if (editingParticipant.value) {
       await participantStore.updateParticipant(editingParticipant.value.id, {
         ...form.value,

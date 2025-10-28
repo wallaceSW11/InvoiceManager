@@ -175,6 +175,22 @@ cardStore.fetchCards()
       />
 
       <v-alert
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mb-4"
+      >
+        <div class="text-body-2">
+          <strong>{{ t('invoice.import.formatInfo.title') }}</strong>
+          <div class="mt-1">{{ t('invoice.import.formatInfo.description') }}</div>
+          <div class="mt-2 text-caption font-mono bg-surface pa-2 rounded">
+            Data;Descrição;Valor<br>
+            11/09/2025;Teresopolis Shopping Center;121,89
+          </div>
+        </div>
+      </v-alert>
+
+      <v-alert
         v-if="error"
         type="error"
         variant="tonal"
