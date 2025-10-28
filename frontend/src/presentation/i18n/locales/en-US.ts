@@ -4,7 +4,7 @@ export default {
     title: 'Invoice Manager'
   },
   nav: {
-    home: 'Home',
+    home: 'Dashboard',
     cards: 'Cards',
     participants: 'Participants',
     invoices: 'Invoices'
@@ -29,7 +29,8 @@ export default {
     next: 'Next',
     finish: 'Finish',
     yes: 'Yes',
-    no: 'No'
+    no: 'No',
+    unknown: 'Unknown'
   },
   cards: {
     title: 'Cards',
@@ -108,6 +109,17 @@ export default {
     title: 'Invoice',
     detail: 'Invoice Detail',
     new: 'New Invoice',
+    list: {
+      title: 'Invoices',
+      subtitle: 'All Invoices',
+      noInvoices: 'No invoices found',
+      deleteConfirm: 'Delete Invoice',
+      deleteMessage: 'Are you sure you want to delete the invoice for card {card} due on {date}?'
+    },
+    actions: {
+      complete: 'Complete',
+      reopen: 'Reopen'
+    },
     import: {
       title: 'Import Invoice',
       step1: 'Select File',
@@ -144,6 +156,7 @@ export default {
       title: 'Split',
       selectParticipants: 'Select Participants',
       autoSplitAll: 'Split All Equally',
+      select: 'Select',
       divideAll: 'Divide to all',
       difference: 'Difference',
       search: 'Search purchases',
@@ -158,9 +171,8 @@ export default {
       send: 'Send on WhatsApp'
     },
     statuses: {
-      draft: 'Draft',
-      open: 'Open',
-      closed: 'Closed'
+      pending: 'Pending',
+      completed: 'Completed'
     }
   },
   theme: {

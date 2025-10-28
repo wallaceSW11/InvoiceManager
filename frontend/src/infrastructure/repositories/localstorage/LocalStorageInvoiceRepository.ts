@@ -94,7 +94,7 @@ export class LocalStorageInvoiceRepository
     return super.create({
       ...dto,
       totalAmount,
-      status: InvoiceStatus.DRAFT
+      status: InvoiceStatus.PENDING
     })
   }
 
@@ -118,6 +118,6 @@ export class LocalStorageInvoiceRepository
 
   async findOpenInvoice(): Promise<Invoice | null> {
     const invoices = await this.findAll()
-    return invoices.find(invoice => invoice.status === InvoiceStatus.OPEN) || null
+    return invoices.find(invoice => invoice.status === InvoiceStatus.PENDING) || null
   }
 }

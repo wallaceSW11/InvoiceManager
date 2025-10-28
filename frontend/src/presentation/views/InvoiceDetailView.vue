@@ -5,8 +5,11 @@ import { useI18n } from 'vue-i18n'
 import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { useCardStore } from '@/presentation/stores/cardStore'
-import { SplitMode } from '@/core/domain/enums'
+import { SplitMode, InvoiceStatus } from '@/core/domain/enums'
 import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities'
+import { MoneyCalculator } from '@/shared/utils/MoneyCalculator'
+import MoneyInput from '@/presentation/components/common/MoneyInput.vue'
+
 
 const { t } = useI18n()
 const route = useRoute()
@@ -29,6 +32,8 @@ const card = computed(() => {
   return cardStore.getCardById(invoice.value.cardId)
 })
 
+const isCompleted = computed(() => invoice.value?.status === InvoiceStatus.COMPLETED)
+
 const filteredTransactions = computed(() => {
   if (!invoice.value || !searchQuery.value) return invoice.value?.transactions || []
   
@@ -50,7 +55,9 @@ const totalsByParticipant = computed(() => {
       const splits = transactionSplits.value[transaction.id]
       if (splits) {
         participants.value.forEach(participant => {
-          totals[participant.id] = (totals[participant.id] || 0) + (splits[participant.id] || 0)
+          const currentTotal = totals[participant.id] || 0
+          const splitValue = splits[participant.id] || 0
+          totals[participant.id] = MoneyCalculator.add(currentTotal, splitValue)
         })
       }
     })
@@ -61,7 +68,8 @@ const totalsByParticipant = computed(() => {
 
 const grandTotal = computed(() => {
   if (!invoice.value) return 0
-  return invoice.value.transactions.reduce((sum, t) => sum + t.amount, 0)
+  const amounts = invoice.value.transactions.map(t => t.amount)
+  return MoneyCalculator.add(...amounts)
 })
 
 function initializeTransactionSplits() {
@@ -104,25 +112,16 @@ function autoSplitTransaction(transaction: Transaction) {
       updateSplitValue(transaction.id, participant.id, 0)
     })
   } else {
-    // Se não está dividido, divide igualmente
-    const splitAmount = transaction.amount / participants.value.length
-    const roundedAmount = Math.round(splitAmount * 100) / 100
-
+    // Se não está dividido, divide igualmente usando MoneyCalculator
     if (!transactionSplits.value[transaction.id]) {
       transactionSplits.value[transaction.id] = {}
     }
 
     const splits = transactionSplits.value[transaction.id]
     if (splits) {
+      const splitValues = MoneyCalculator.splitEqually(transaction.amount, participants.value.length)
       participants.value.forEach((participant, index) => {
-        if (index === participants.value.length - 1) {
-          const sumOthers = participants.value
-            .slice(0, -1)
-            .reduce((sum) => sum + roundedAmount, 0)
-          splits[participant.id] = Math.round((transaction.amount - sumOthers) * 100) / 100
-        } else {
-          splits[participant.id] = roundedAmount
-        }
+        splits[participant.id] = splitValues[index] || 0
       })
     }
   }
@@ -143,20 +142,10 @@ function autoSplitForParticipant(transaction: Transaction, participant: Particip
     
     if (participantsWithValue.length > 0) {
       const difference = getTransactionDifference(transaction)
-      const splitAmount = difference / participantsWithValue.length
-      const roundedAmount = Math.round(splitAmount * 100) / 100
+      const splitValues = MoneyCalculator.splitEqually(difference, participantsWithValue.length)
       
       participantsWithValue.forEach((p, index) => {
-        if (index === participantsWithValue.length - 1) {
-          // Último participante recebe o resto para evitar diferença por arredondamento
-          const sumOthers = participantsWithValue
-            .slice(0, -1)
-            .reduce((sum) => sum + roundedAmount, 0)
-          const lastAmount = Math.round((difference - sumOthers) * 100) / 100
-          updateSplitValue(transaction.id, p.id, lastAmount)
-        } else {
-          updateSplitValue(transaction.id, p.id, roundedAmount)
-        }
+        updateSplitValue(transaction.id, p.id, splitValues[index] || 0)
       })
     }
   } else {
@@ -167,39 +156,28 @@ function autoSplitForParticipant(transaction: Transaction, participant: Particip
     
     // Inclui o participante atual na divisão
     const participantsToSplit = [...participantsWithValue, participant]
-    const difference = getTransactionDifference(transaction)
-    const splitAmount = (difference + participantsWithValue.reduce((sum, p) => 
-      sum + getSplitValue(transaction.id, p.id), 0)) / participantsToSplit.length
-    const roundedAmount = Math.round(splitAmount * 100) / 100
+    const splitValues = MoneyCalculator.splitEqually(transaction.amount, participantsToSplit.length)
     
     participantsToSplit.forEach((p, index) => {
-      if (index === participantsToSplit.length - 1) {
-        // Último participante recebe o resto
-        const sumOthers = participantsToSplit
-          .slice(0, -1)
-          .reduce((sum) => sum + roundedAmount, 0)
-        const lastAmount = Math.round((transaction.amount - sumOthers) * 100) / 100
-        updateSplitValue(transaction.id, p.id, lastAmount)
-      } else {
-        updateSplitValue(transaction.id, p.id, roundedAmount)
-      }
+      updateSplitValue(transaction.id, p.id, splitValues[index] || 0)
     })
   }
 }
 
 function getTransactionDifference(transaction: Transaction): number {
   const total = getTransactionTotal(transaction)
-  return Math.round((transaction.amount - total) * 100) / 100
+  return MoneyCalculator.subtract(transaction.amount, total)
 }
 
 function getTransactionTotal(transaction: Transaction): number {
   const splits = transactionSplits.value[transaction.id] || {}
-  return Object.values(splits).reduce((sum, amount) => sum + amount, 0)
+  return MoneyCalculator.add(...Object.values(splits))
 }
 
 function isTransactionValid(transaction: Transaction): boolean {
   const total = getTransactionTotal(transaction)
-  return Math.abs(total - transaction.amount) < 0.01
+  const difference = MoneyCalculator.subtract(transaction.amount, total)
+  return MoneyCalculator.isNegligible(difference)
 }
 
 function areAllTransactionsValid(): boolean {
@@ -243,6 +221,27 @@ async function saveAndClose() {
   await saveInvoice()
   if (areAllTransactionsValid()) {
     router.push('/')
+  }
+}
+
+async function completeInvoice() {
+  if (!invoice.value || !areAllTransactionsValid()) return
+
+  try {
+    await saveInvoice()
+    await invoiceStore.completeInvoice(invoice.value.id)
+  } catch (error) {
+    console.error('Error completing invoice:', error)
+  }
+}
+
+async function reopenInvoice() {
+  if (!invoice.value) return
+
+  try {
+    await invoiceStore.reopenInvoice(invoice.value.id)
+  } catch (error) {
+    console.error('Error reopening invoice:', error)
   }
 }
 
@@ -302,7 +301,7 @@ function openWhatsApp(participantId: string) {
   
   if (!participant || !message) return
 
-  const phone = participant.phoneNumber.replace(/\D/g, '')
+  const phone = '+55' + participant.phoneNumber.replace(/\D/g, '')
   const encodedMessage = encodeURIComponent(message)
   const url = `https://wa.me/${phone}?text=${encodedMessage}`
   
@@ -328,25 +327,53 @@ onMounted(async () => {
     <v-card class="mb-2">
       <v-card-text class="py-3">
         <v-row dense align="center">
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <div class="text-caption text-medium-emphasis">{{ t('invoice.card') }}</div>
             <div class="text-body-2 font-weight-medium">
               {{ card?.nickname }} (*{{ card?.lastFourDigits }})
             </div>
           </v-col>
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <div class="text-caption text-medium-emphasis">{{ t('invoice.dueDate') }}</div>
             <div class="text-body-2 font-weight-medium">
               {{ new Date(invoice.dueDate).toLocaleDateString('pt-BR') }}
             </div>
           </v-col>
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <div class="text-caption text-medium-emphasis">{{ t('invoice.total') }}</div>
             <div class="text-h6 font-weight-bold">
               {{ grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
             </div>
           </v-col>
-          <v-col cols="12" sm="12" md="6" class="d-flex justify-end flex-wrap gap-2">
+          <v-col cols="12" sm="6" md="3" lg="2">
+            <div class="text-caption text-medium-emphasis">{{ t('invoice.status') }}</div>
+            <v-chip
+              :color="isCompleted ? 'success' : 'warning'"
+              size="small"
+            >
+              {{ t(`invoice.statuses.${invoice.status.toLowerCase()}`) }}
+            </v-chip>
+          </v-col>
+          <v-col cols="12" md="12" lg="4" class="d-flex justify-end flex-wrap gap-2">
+            <v-btn
+              v-if="isCompleted"
+              color="warning"
+              prepend-icon="mdi-lock-open"
+              @click="reopenInvoice"
+              size="small"
+            >
+              {{ t('invoice.actions.reopen') }}
+            </v-btn>
+            <v-btn
+              v-else
+              color="success"
+              prepend-icon="mdi-check"
+              @click="completeInvoice"
+              :disabled="!areAllTransactionsValid()"
+              size="small"
+            >
+              {{ t('invoice.actions.complete') }}
+            </v-btn>
             <v-btn
               color="success"
               prepend-icon="mdi-whatsapp"
@@ -360,6 +387,7 @@ onMounted(async () => {
               color="primary"
               prepend-icon="mdi-content-save"
               :loading="saving"
+              :disabled="isCompleted"
               @click="saveInvoice"
               size="small"
             >
@@ -442,6 +470,7 @@ onMounted(async () => {
                         icon="mdi-calculator"
                         size="small"
                         variant="text"
+                        :disabled="isCompleted"
                         @click="autoSplitTransaction(transaction)"
                       />
                     </template>
@@ -454,16 +483,13 @@ onMounted(async () => {
                   class="pa-1"
                 >
                   <div class="d-flex align-center gap-1">
-                    <v-text-field
+                    <MoneyInput
                       :model-value="getSplitValue(transaction.id, participant.id)"
-                      @update:model-value="(val) => updateSplitValue(transaction.id, participant.id, Number(val) || 0)"
-                      type="number"
+                      @update:model-value="(val) => updateSplitValue(transaction.id, participant.id, val)"
                       density="compact"
                       hide-details
                       variant="outlined"
-                      step="0.01"
-                      min="0"
-                      class="text-right"
+                      :disabled="isCompleted"
                       style="max-width: 130px"
                     />
                     <v-tooltip location="top">
@@ -473,10 +499,11 @@ onMounted(async () => {
                           icon="mdi-calculator"
                           size="x-small"
                           variant="text"
+                          :disabled="isCompleted"
                           @click="autoSplitForParticipant(transaction, participant)"
                         />
                       </template>
-                      <span>{{ t('invoice.split.divideAll') }}</span>
+                      <span>{{ t('invoice.split.select') }}</span>
                     </v-tooltip>
                   </div>
                 </td>

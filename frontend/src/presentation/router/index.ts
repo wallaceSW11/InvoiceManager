@@ -21,6 +21,12 @@ const routes: RouteRecordRaw[] = [
     meta: { titleKey: 'nav.participants' }
   },
   {
+    path: '/invoices',
+    name: 'invoices',
+    component: () => import('@/presentation/views/InvoicesView.vue'),
+    meta: { titleKey: 'nav.invoices' }
+  },
+  {
     path: '/invoice/:id',
     name: 'invoice-detail',
     component: () => import('@/presentation/views/InvoiceDetailView.vue'),

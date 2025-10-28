@@ -4,7 +4,7 @@ export default {
     title: 'Gestor de Faturas'
   },
   nav: {
-    home: 'Início',
+    home: 'Dashboard',
     cards: 'Cartões',
     participants: 'Participantes',
     invoices: 'Faturas'
@@ -29,7 +29,8 @@ export default {
     next: 'Próximo',
     finish: 'Finalizar',
     yes: 'Sim',
-    no: 'Não'
+    no: 'Não',
+    unknown: 'Desconhecido'
   },
   cards: {
     title: 'Cartões',
@@ -81,7 +82,7 @@ export default {
     }
   },
   home: {
-    title: 'Painel',
+    title: 'Dashboard',
     stats: {
       cards: 'Cartões',
       participants: 'Participantes',
@@ -108,6 +109,17 @@ export default {
     title: 'Fatura',
     detail: 'Detalhes da Fatura',
     new: 'Nova Fatura',
+    list: {
+      title: 'Faturas',
+      subtitle: 'Todas as Faturas',
+      noInvoices: 'Nenhuma fatura encontrada',
+      deleteConfirm: 'Excluir Fatura',
+      deleteMessage: 'Deseja realmente excluir a fatura do cartão {card} com vencimento em {date}?'
+    },
+    actions: {
+      complete: 'Finalizar',
+      reopen: 'Reabrir'
+    },
     import: {
       title: 'Importar Fatura',
       step1: 'Selecionar Arquivo',
@@ -144,6 +156,7 @@ export default {
       title: 'Divisão',
       selectParticipants: 'Selecione os Participantes',
       autoSplitAll: 'Dividir Tudo Igualmente',
+      select: 'Selecionar',
       divideAll: 'Dividir para todos',
       difference: 'Diferença',
       search: 'Pesquisar compras',
@@ -158,9 +171,8 @@ export default {
       send: 'Enviar no WhatsApp'
     },
     statuses: {
-      draft: 'Rascunho',
-      open: 'Aberta',
-      closed: 'Fechada'
+      pending: 'Pendente',
+      completed: 'Finalizada'
     }
   },
   theme: {
