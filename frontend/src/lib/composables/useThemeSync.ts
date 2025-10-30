@@ -1,6 +1,6 @@
 import { watch, onMounted } from "vue";
 import { useTheme as useVuetifyTheme } from "vuetify";
-import { useThemeStore } from "@/stores/theme";
+import { useThemeStore } from "@lib/stores/theme";
 
 export function useThemeSync() {
   const themeStore = useThemeStore();

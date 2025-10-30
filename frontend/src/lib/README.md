@@ -85,15 +85,15 @@ const confirmed = await confirm("Title", "Message");
 - **Modals**: `ModalBase`, `ConfirmDialog`
 - **Messages**: `FloatingNotify`
 - **Loading**: `LoadingOverlay`
+- **Theme**: `ThemeToggle` - Theme switcher (requires theme.json)
 
 ### Optional Components (require external configuration)
 
-⚠️ **These components depend on project stores/composables:**
+⚠️ **This component requires external setup:**
 
-- **`ThemeToggle`** - Requires `@/stores/theme` configured
-- **`LanguageSelector`** - Requires `@/composables/useLocale` configured
+- **`LanguageSelector`** - Requires project's locale configuration (has fallback)
 
-> If you don't need these components, you can remove them from the `lib/components/` folder or create the necessary stores in your project.
+> The `ThemeToggle` is now fully integrated in the lib and works out of the box if you have a `theme.json` in your project's `public/` folder.
 
 ### Utilities (Composables)
 
@@ -105,12 +105,14 @@ const { notify, loading, confirm } = useGlobals();
 - **`notify(type, title, message)`** - Toast notifications
 - **`loading(show, message?)`** - Loading overlay
 - **`confirm(title, message)`** - Confirmation dialog (returns Promise<boolean>)
+- **`useThemeSync()`** - Syncs theme.json with Vuetify theme
 
 ### Direct Imports (if preferred)
 
 ```typescript
 import { notify, loading, confirm } from "@lib/utils";
 import { useNotifyStore, useLoadingStore, useConfirmStore } from "@lib/utils";
+import { useThemeStore } from "@lib/stores/theme";
 ```
 
 ## 🎯 Included Stores
@@ -118,6 +120,7 @@ import { useNotifyStore, useLoadingStore, useConfirmStore } from "@lib/utils";
 - `useNotifyStore` - Manages notifications
 - `useLoadingStore` - Manages loading states
 - `useConfirmStore` - Manages confirmation dialogs
+- `useThemeStore` - Manages theme configuration and mode (light/dark)
 
 ## ⚙️ Required Dependencies
 
@@ -178,6 +181,21 @@ onMounted(registerGlobalComponentRefs);
 2. **Vuetify** is required for components to work
 3. Components are registered **globally** automatically
 4. No need to import individual components, use them directly in templates
+5. **i18n (Internationalization)**:
+   - `ConfirmDialog` and `LoadingOverlay` use i18n for button labels and messages
+   - Required translations in your project's locale files:
+     ```typescript
+     // locales/en-US.ts
+     export default {
+       common: {
+         yes: "Yes",
+         no: "No",
+         loading: "Loading...",
+       },
+     };
+     ```
+   - If your project doesn't use i18n, the lib includes fallback translations in `lib/locales/`
+   - `LanguageSelector` component automatically uses `lib/locales/` as fallback
 
 ## 🚀 Complete Example
 

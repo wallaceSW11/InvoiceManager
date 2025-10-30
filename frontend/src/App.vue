@@ -19,7 +19,7 @@
         <div class="d-flex">
           <img
           :src="logoUrl"
-          alt="InvoiceManager logo"
+          alt="App logo"
           width="32"
           height="32"
           cover
@@ -38,13 +38,8 @@
       >
         {{ t('invoice.import.title') }}
       </v-btn>
-      <!-- <v-btn icon color="white" @click="toggleLanguage" class="mr-1">
-        <v-icon>{{ currentLocale === 'pt-BR' ? 'mdi-flag-variant' : 'mdi-flag-variant-outline' }}</v-icon>
-      </v-btn> -->
       <LanguageSelector :available-locales="myCustomLocales" />
-      <v-btn icon color="white" @click="toggleTheme">
-        <v-icon>{{ isDark ? 'mdi-white-balance-sunny' : 'mdi-weather-night' }}</v-icon>
-      </v-btn>
+      <ThemeToggle />
     </v-app-bar>
 
     <v-main>
@@ -64,43 +59,35 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import ImportInvoiceDialog from '@/presentation/components/ImportInvoiceDialog.vue'
-import { useNotifyStore, useLoadingStore, useConfirmStore } from "@lib"
+import { useNotifyStore, useLoadingStore, useConfirmStore, ThemeToggle, useThemeSync } from "@lib"
+import { useThemeStore } from '@lib/stores/theme'
 import logoUrl from '@/assets/logo.png?url'
 import { availableLocales as myCustomLocales } from '@/presentation/i18n'
 
 const LOCALE_STORAGE_KEY = 'invoicemanager:locale'
-const THEME_STORAGE_KEY = 'invoicemanager:theme'
 
-const theme = useTheme()
 const { t, locale } = useI18n()
 const router = useRouter()
+const themeStore = useThemeStore()
 const storageAvailable = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+
+// Sincroniza o tema com o Vuetify automaticamente
+useThemeSync()
 
 const showImportDialog = ref(false)
 const floatingNotifyRef = ref()
 const loadingOverlayRef = ref()
 const confirmDialogRef = ref()
 
-// const currentLocale = computed(() => locale.value)
-const isDark = computed(() => theme.global.current.value.dark)
 const navItems = computed(() => [
   { icon: 'mdi-home', title: t('nav.home'), to: '/' },
   { icon: 'mdi-credit-card', title: t('nav.cards'), to: '/cards' },
   { icon: 'mdi-account-group', title: t('nav.participants'), to: '/participants' },
   { icon: 'mdi-file-document-multiple', title: t('nav.invoices'), to: '/invoices' },
 ])
-
-function toggleTheme() {
-  const nextTheme = theme.global.current.value.dark ? 'light' : 'dark'
-  theme.change(nextTheme);
-  if (storageAvailable) {
-    localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
-  }
-}
 
 async function handleInvoiceImported(invoiceId: string) {
   showImportDialog.value = false
@@ -117,17 +104,16 @@ function registerGlobalComponentRefs() {
   confirmStore.setConfirmRef(confirmDialogRef.value)
 }
 
-onMounted(registerGlobalComponentRefs)
+onMounted(async () => {
+  await themeStore.loadTheme()
+  registerGlobalComponentRefs()
+})
 
 if (storageAvailable) {
   const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY)
   if (savedLocale === 'pt-BR' || savedLocale === 'en-US') {
     locale.value = savedLocale
   }
-
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY)
-  if (savedTheme === 'light' || savedTheme === 'dark') {
-    theme.change(savedTheme);
-  }
 }
 </script>
+

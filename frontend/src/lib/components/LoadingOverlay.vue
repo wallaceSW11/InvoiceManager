@@ -3,12 +3,7 @@
     <div v-if="isVisible" class="loading-overlay">
       <Transition name="fade-delayed">
         <div v-if="showContent" class="loading-content">
-          <v-progress-circular
-            indeterminate
-            color="primary"
-            :size="70"
-            :width="7"
-          />
+          <v-progress-circular indeterminate color="primary" :size="70" :width="7" />
           <div class="loading-text mt-6">
             {{ currentMessage }}
           </div>
@@ -20,16 +15,19 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const isVisible = ref(false)
 const showContent = ref(false)
-const currentMessage = ref('Carregando...')
+const currentMessage = ref(t('common.loading'))
 let contentTimeoutId: ReturnType<typeof setTimeout> | null = null
 
-const show = (message = 'Carregando...') => {
-  currentMessage.value = message
+const show = (message?: string) => {
+  currentMessage.value = message || t('common.loading')
   isVisible.value = true
-  
+
   // Show content after 300ms delay
   contentTimeoutId = setTimeout(() => {
     showContent.value = true
