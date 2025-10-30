@@ -80,9 +80,11 @@ import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import type { Card } from '@/core/domain/entities'
 import ModalBase from '@/presentation/components/ModalBase.vue'
+import { useGlobals } from '@lib'
 
 const { t } = useI18n()
 const cardStore = useCardStore()
+const { notify } = useGlobals()
 
 const headers = computed(() => [
   { title: t('cards.nickname'), key: 'nickname' },
@@ -127,11 +129,13 @@ async function saveCard() {
   try {
     if (editingCard.value) {
       await cardStore.updateCard(editingCard.value.id, form.value)
+      notify('success', t('common.success'), t('cards.messages.updated'))
       // Em edição, fecha o modal
       dialog.value = false
       editingCard.value = null
     } else {
       await cardStore.createCard(form.value)
+      notify('success', t('common.success'), t('cards.messages.created'))
       // Em novo cadastro, mantém o modal aberto e limpa os campos
       form.value = { nickname: '', lastFourDigits: '' }
       formRef.value?.resetValidation()
@@ -142,6 +146,7 @@ async function saveCard() {
     }
   } catch (error) {
     console.error('Error saving card:', error)
+    notify('error', t('common.error'), t('cards.messages.error'))
   }
 }
 
@@ -149,8 +154,10 @@ async function confirmDelete(card: Card) {
   if (confirm(t('cards.deleteConfirm', { nickname: card.nickname }))) {
     try {
       await cardStore.deleteCard(card.id)
+      notify('success', t('common.success'), t('cards.messages.deleted'))
     } catch (error) {
       console.error('Error deleting card:', error)
+      notify('error', t('common.error'), t('cards.messages.error'))
     }
   }
 }

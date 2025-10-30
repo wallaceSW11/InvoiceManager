@@ -102,14 +102,6 @@ function toggleTheme() {
   }
 }
 
-function toggleLanguage() {
-  const nextLocale = locale.value === 'pt-BR' ? 'en-US' : 'pt-BR'
-  locale.value = nextLocale
-  if (storageAvailable) {
-    localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale)
-  }
-}
-
 async function handleInvoiceImported(invoiceId: string) {
   showImportDialog.value = false
   await router.push(`/invoice/${invoiceId}`)

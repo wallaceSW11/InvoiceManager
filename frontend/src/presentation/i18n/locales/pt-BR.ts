@@ -147,6 +147,10 @@ export default {
         amount: 'Valor',
         total: 'Total',
         button: 'Visualizar'
+      },
+      messages: {
+        success: 'Fatura importada com sucesso',
+        error: 'Erro ao importar fatura'
       }
     },
     card: 'Cartão',

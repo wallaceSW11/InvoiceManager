@@ -147,6 +147,10 @@ export default {
         amount: 'Amount',
         total: 'Total',
         button: 'Preview'
+      },
+      messages: {
+        success: 'Invoice imported successfully',
+        error: 'Error importing invoice'
       }
     },
     card: 'Card',

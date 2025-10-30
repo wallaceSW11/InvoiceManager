@@ -5,11 +5,12 @@ import { useCardStore } from "@/presentation/stores/cardStore";
 import { useInvoiceStore } from "@/presentation/stores/invoiceStore";
 import { CSVParser } from "@/infrastructure/parsers";
 import ModalBase from "./ModalBase.vue";
-import { notify } from "@/lib";
+import { useGlobals } from "@lib";
 
 const { t } = useI18n();
 const cardStore = useCardStore();
 const invoiceStore = useInvoiceStore();
+const { notify } = useGlobals();
 
 const emit = defineEmits<{
   close: [];
@@ -105,6 +106,7 @@ async function importInvoice() {
         .sort((a, b) => a.date.getTime() - b.date.getTime()), // Ordena por data (mais antigo primeiro)
     });
 
+    notify("success", t("common.success"), t("invoice.import.messages.success"));
     emit("imported", newInvoice.id);
 
     setTimeout(() => {
@@ -112,6 +114,7 @@ async function importInvoice() {
     }, 100);
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err);
+    notify("error", t("common.error"), t("invoice.import.messages.error"));
     loading.value = false;
   }
 }
