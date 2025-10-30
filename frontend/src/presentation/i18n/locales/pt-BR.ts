@@ -182,6 +182,10 @@ export default {
     statuses: {
       pending: 'Pendente',
       completed: 'Finalizada'
+    },
+    messages: {
+      deleted: 'Fatura excluída com sucesso',
+      error: 'Erro ao gerenciar fatura'
     }
   },
   theme: {

@@ -8,19 +8,19 @@
 
     <v-row>
       <v-col cols="12" md="4">
-        <v-card @click="router.push('/cards')" style="cursor: pointer">
+        <v-card @click="navigateTo('/cards')" style="cursor: pointer" hover>
           <v-card-title>{{ t('home.stats.cards') }}</v-card-title>
           <v-card-text class="text-h4">{{ cardStore.cardCount }}</v-card-text>
         </v-card>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card @click="router.push('/participants')" style="cursor: pointer">
+        <v-card @click="navigateTo('/participants')" style="cursor: pointer" hover>
           <v-card-title>{{ t('home.stats.participants') }}</v-card-title>
           <v-card-text class="text-h4">{{ participantStore.participantCount }}</v-card-text>
         </v-card>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card @click="router.push('/invoices')" style="cursor: pointer">
+        <v-card @click="navigateTo('/invoices')" style="cursor: pointer" hover>
           <v-card-title>{{ t('home.stats.invoices') }}</v-card-title>
           <v-card-text class="text-h4">{{ invoiceStore.invoiceCount }}</v-card-text>
         </v-card>
@@ -42,6 +42,10 @@ const router = useRouter()
 const cardStore = useCardStore()
 const participantStore = useParticipantStore()
 const invoiceStore = useInvoiceStore()
+
+function navigateTo(path: string) {
+  router.push(path)
+}
 
 onMounted(async () => {
   await Promise.all([

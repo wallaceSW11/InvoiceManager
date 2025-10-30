@@ -67,44 +67,24 @@
         </v-data-table>
       </v-card-text>
     </v-card>
-
-    <!-- Delete Confirmation Dialog -->
-    <ModalBase
-      v-model="deleteDialog"
-      :title="t('invoice.list.deleteConfirm')"
-      :primary-button-text="t('common.delete')"
-      :secondary-button-text="t('common.cancel')"
-      primary-icon="mdi-delete"
-      max-width="500"
-      :primary-action="deleteInvoice"
-    >
-      <div v-if="invoiceToDelete">
-        {{ t('invoice.list.deleteMessage', { 
-          card: getCardName(invoiceToDelete.cardId),
-          date: formatDate(invoiceToDelete.dueDate)
-        }) }}
-      </div>
-    </ModalBase>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import { InvoiceStatus } from '@/core/domain/enums'
 import type { Invoice } from '@/core/domain/entities'
-import ModalBase from '@/presentation/components/ModalBase.vue'
+import { useGlobals } from '@lib'
 
 const { t } = useI18n()
 const router = useRouter()
 const invoiceStore = useInvoiceStore()
 const cardStore = useCardStore()
-
-const deleteDialog = ref(false)
-const invoiceToDelete = ref<Invoice | null>(null)
+const { confirm, notify } = useGlobals()
 
 const headers = computed(() => [
   { title: t('invoice.card'), key: 'cardId', sortable: true },
@@ -141,20 +121,23 @@ function viewInvoice(id: string) {
   router.push(`/invoice/${id}`)
 }
 
-function confirmDelete(invoice: Invoice) {
-  invoiceToDelete.value = invoice
-  deleteDialog.value = true
-}
+async function confirmDelete(invoice: Invoice) {
+  const confirmed = await confirm(
+    t('invoice.list.deleteConfirm'),
+    t('invoice.list.deleteMessage', { 
+      card: getCardName(invoice.cardId),
+      date: formatDate(invoice.dueDate)
+    })
+  )
 
-async function deleteInvoice() {
-  if (!invoiceToDelete.value) return
-  
-  try {
-    await invoiceStore.deleteInvoice(invoiceToDelete.value.id)
-    deleteDialog.value = false
-    invoiceToDelete.value = null
-  } catch (error) {
-    console.error('Failed to delete invoice:', error)
+  if (confirmed) {
+    try {
+      await invoiceStore.deleteInvoice(invoice.id)
+      notify('success', t('common.success'), t('invoice.messages.deleted'))
+    } catch (error) {
+      console.error('Failed to delete invoice:', error)
+      notify('error', t('common.error'), t('invoice.messages.error'))
+    }
   }
 }
 </script>

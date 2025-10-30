@@ -182,6 +182,10 @@ export default {
     statuses: {
       pending: 'Pending',
       completed: 'Completed'
+    },
+    messages: {
+      deleted: 'Invoice deleted successfully',
+      error: 'Error managing invoice'
     }
   },
   theme: {
