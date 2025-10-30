@@ -47,6 +47,7 @@
     >
       <v-form ref="formRef" v-model="formValid">
         <v-text-field
+          ref="nameFieldRef"
           v-model="form.name"
           :label="t('participants.name')"
           :rules="[
@@ -56,6 +57,7 @@
           maxlength="20"
           counter
           required
+          :autofocus="!editingParticipant"
         />
         <v-text-field
           v-model="form.phoneNumber"
@@ -75,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { usePhoneMask } from '@/presentation/composables/usePhoneMask'
@@ -94,6 +96,8 @@ const headers = computed(() => [
 
 const dialog = ref(false)
 const formValid = ref(false)
+const formRef = ref<any>(null)
+const nameFieldRef = ref<any>(null)
 const editingParticipant = ref<Participant | null>(null)
 const form = ref({
   name: '',
@@ -147,15 +151,22 @@ async function saveParticipant() {
         ...form.value,
         phoneNumber: cleanPhone
       })
+      // Em edição, fecha o modal
+      dialog.value = false
+      editingParticipant.value = null
     } else {
       await participantStore.createParticipant({
         ...form.value,
         phoneNumber: cleanPhone
       })
+      // Em novo cadastro, mantém o modal aberto e limpa os campos
+      form.value = { name: '', phoneNumber: '' }
+      formRef.value?.resetValidation()
+      // Retorna o foco para o primeiro campo
+      nextTick(() => {
+        nameFieldRef.value?.focus()
+      })
     }
-    dialog.value = false
-    form.value = { name: '', phoneNumber: '' }
-    editingParticipant.value = null
   } catch (error) {
     console.error('Error saving participant:', error)
   }
