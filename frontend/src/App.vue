@@ -38,9 +38,10 @@
       >
         {{ t('invoice.import.title') }}
       </v-btn>
-      <v-btn icon color="white" @click="toggleLanguage" class="mr-1">
+      <!-- <v-btn icon color="white" @click="toggleLanguage" class="mr-1">
         <v-icon>{{ currentLocale === 'pt-BR' ? 'mdi-flag-variant' : 'mdi-flag-variant-outline' }}</v-icon>
-      </v-btn>
+      </v-btn> -->
+      <LanguageSelector :available-locales="myCustomLocales" />
       <v-btn icon color="white" @click="toggleTheme">
         <v-icon>{{ isDark ? 'mdi-white-balance-sunny' : 'mdi-weather-night' }}</v-icon>
       </v-btn>
@@ -53,16 +54,23 @@
     </v-main>
 
     <ImportInvoiceDialog v-model="showImportDialog" @imported="handleInvoiceImported" />
+    
+    <!-- Required global components from @lib -->
+    <FloatingNotify ref="floatingNotifyRef" />
+    <LoadingOverlay ref="loadingOverlayRef" />
+    <ConfirmDialog ref="confirmDialogRef" />
   </v-app>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import ImportInvoiceDialog from '@/presentation/components/ImportInvoiceDialog.vue'
+import { useNotifyStore, useLoadingStore, useConfirmStore } from "@lib"
 import logoUrl from '@/assets/logo.png?url'
+import { availableLocales as myCustomLocales } from '@/presentation/i18n'
 
 const LOCALE_STORAGE_KEY = 'invoicemanager:locale'
 const THEME_STORAGE_KEY = 'invoicemanager:theme'
@@ -73,8 +81,11 @@ const router = useRouter()
 const storageAvailable = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
 const showImportDialog = ref(false)
+const floatingNotifyRef = ref()
+const loadingOverlayRef = ref()
+const confirmDialogRef = ref()
 
-const currentLocale = computed(() => locale.value)
+// const currentLocale = computed(() => locale.value)
 const isDark = computed(() => theme.global.current.value.dark)
 const navItems = computed(() => [
   { icon: 'mdi-home', title: t('nav.home'), to: '/' },
@@ -103,6 +114,18 @@ async function handleInvoiceImported(invoiceId: string) {
   showImportDialog.value = false
   await router.push(`/invoice/${invoiceId}`)
 }
+
+function registerGlobalComponentRefs() {
+  const notifyStore = useNotifyStore()
+  const loadingStore = useLoadingStore()
+  const confirmStore = useConfirmStore()
+
+  notifyStore.setNotifyRef(floatingNotifyRef.value)
+  loadingStore.setLoadingRef(loadingOverlayRef.value)
+  confirmStore.setConfirmRef(confirmDialogRef.value)
+}
+
+onMounted(registerGlobalComponentRefs)
 
 if (storageAvailable) {
   const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY)

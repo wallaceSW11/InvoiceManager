@@ -129,6 +129,7 @@ export default {
       selectFile: 'Select TXT file',
       parseErrors: 'Errors parsing file:',
       noTransactions: 'No transactions found in file',
+      alreadyExists: 'This invoice has already been imported',
       import: 'Import',
       formatInfo: {
         title: 'File format:',

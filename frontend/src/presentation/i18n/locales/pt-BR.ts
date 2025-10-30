@@ -129,6 +129,7 @@ export default {
       selectFile: 'Selecione o arquivo TXT',
       parseErrors: 'Erros ao processar arquivo:',
       noTransactions: 'Nenhuma transação encontrada no arquivo',
+      alreadyExists: 'Esta fatura já foi importada',
       import: 'Importar',
       formatInfo: {
         title: 'Formato do arquivo:',

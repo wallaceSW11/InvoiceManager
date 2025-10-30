@@ -14,4 +14,10 @@ const i18n = createI18n<[MessageSchema], 'en-US' | 'pt-BR'>({
   }
 })
 
+export const availableLocales = [
+  { code: "pt-BR", name: "Português (Brasil)", countryCode: "BR" },
+  { code: "en-US", name: "English (US)", countryCode: "US" },
+] as const;
+
+
 export default i18n
