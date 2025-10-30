@@ -47,6 +47,7 @@
     >
       <v-form ref="formRef" v-model="formValid">
         <v-text-field
+          ref="nicknameFieldRef"
           v-model="form.nickname"
           :label="t('cards.nickname')"
           :rules="[
@@ -56,6 +57,7 @@
           maxlength="15"
           counter
           required
+          :autofocus="!editingCard"
         />
         <v-text-field
           v-model="form.lastFourDigits"
@@ -73,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import type { Card } from '@/core/domain/entities'
@@ -90,6 +92,8 @@ const headers = computed(() => [
 
 const dialog = ref(false)
 const formValid = ref(false)
+const formRef = ref<any>(null)
+const nicknameFieldRef = ref<any>(null)
 const editingCard = ref<Card | null>(null)
 const form = ref({
   nickname: '',
@@ -123,12 +127,19 @@ async function saveCard() {
   try {
     if (editingCard.value) {
       await cardStore.updateCard(editingCard.value.id, form.value)
+      // Em edição, fecha o modal
+      dialog.value = false
+      editingCard.value = null
     } else {
       await cardStore.createCard(form.value)
+      // Em novo cadastro, mantém o modal aberto e limpa os campos
+      form.value = { nickname: '', lastFourDigits: '' }
+      formRef.value?.resetValidation()
+      // Retorna o foco para o primeiro campo
+      nextTick(() => {
+        nicknameFieldRef.value?.focus()
+      })
     }
-    dialog.value = false
-    form.value = { nickname: '', lastFourDigits: '' }
-    editingCard.value = null
   } catch (error) {
     console.error('Error saving card:', error)
   }

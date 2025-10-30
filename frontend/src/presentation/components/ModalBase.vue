@@ -24,7 +24,7 @@
         </v-btn>
         <v-btn
           v-if="showSecondaryButton"
-          color="secondary"
+          variant="outlined"
           :prepend-icon="secondaryIcon"
           :disabled="disableSecondaryButton"
           @click="handleSecondaryAction"

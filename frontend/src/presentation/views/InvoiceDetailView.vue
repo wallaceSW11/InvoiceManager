@@ -19,6 +19,7 @@ const participantStore = useParticipantStore()
 const cardStore = useCardStore()
 
 const transactionSplits = ref<Record<string, Record<string, number>>>({})
+const manualValues = ref<Record<string, Record<string, boolean>>>({}) // Rastreia valores manuais
 const saving = ref(false)
 const showWhatsAppDialog = ref(false)
 const generatedMessages = ref<Record<string, string>>({})
@@ -97,71 +98,165 @@ function updateSplitValue(transactionId: string, participantId: string, value: n
   if (!transactionSplits.value[transactionId]) {
     transactionSplits.value[transactionId] = {}
   }
+  if (!manualValues.value[transactionId]) {
+    manualValues.value[transactionId] = {}
+  }
+  
   transactionSplits.value[transactionId][participantId] = value
+  // Marca como manual quando o usuário digita diretamente
+  manualValues.value[transactionId][participantId] = true
+}
+
+function isManualValue(transactionId: string, participantId: string): boolean {
+  return manualValues.value[transactionId]?.[participantId] || false
 }
 
 function autoSplitTransaction(transaction: Transaction) {
   if (participants.value.length === 0) return
 
-  // Verifica se já está dividido (todos os participantes têm valor)
-  const allHaveValues = participants.value.every(p => getSplitValue(transaction.id, p.id) > 0)
+  // Pega participantes sem valor (zerados) e que não são manuais
+  const participantsWithoutValue = participants.value.filter(p => {
+    const value = getSplitValue(transaction.id, p.id)
+    const isManual = isManualValue(transaction.id, p.id)
+    return value === 0 && !isManual
+  })
   
-  if (allHaveValues) {
-    // Se já está dividido, remove tudo (zera todos)
-    participants.value.forEach(participant => {
-      updateSplitValue(transaction.id, participant.id, 0)
-    })
-  } else {
-    // Se não está dividido, divide igualmente usando MoneyCalculator
-    if (!transactionSplits.value[transaction.id]) {
-      transactionSplits.value[transaction.id] = {}
-    }
+  if (participantsWithoutValue.length === 0) return
 
-    const splits = transactionSplits.value[transaction.id]
-    if (splits) {
-      const splitValues = MoneyCalculator.splitEqually(transaction.amount, participants.value.length)
-      participants.value.forEach((participant, index) => {
-        splits[participant.id] = splitValues[index] || 0
-      })
-    }
+  // Calcula o valor restante (total - soma dos valores já atribuídos)
+  const currentTotal = getTransactionTotal(transaction)
+  const remaining = MoneyCalculator.subtract(transaction.amount, currentTotal)
+  
+  if (remaining <= 0) return
+
+  // Divide o restante entre os participantes sem valor
+  if (!transactionSplits.value[transaction.id]) {
+    transactionSplits.value[transaction.id] = {}
+  }
+  if (!manualValues.value[transaction.id]) {
+    manualValues.value[transaction.id] = {}
+  }
+
+  const splits = transactionSplits.value[transaction.id]
+  const manuals = manualValues.value[transaction.id]
+  if (splits && manuals) {
+    const splitValues = MoneyCalculator.splitEqually(remaining, participantsWithoutValue.length)
+    participantsWithoutValue.forEach((participant, index) => {
+      splits[participant.id] = splitValues[index] || 0
+      manuals[participant.id] = false // Marca como automático
+    })
   }
 }
 
-function autoSplitForParticipant(transaction: Transaction, participant: Participant) {
+function removeAllSplits(transaction: Transaction) {
+  if (!transactionSplits.value[transaction.id]) return
+
+  const splits = transactionSplits.value[transaction.id]
+  const manuals = manualValues.value[transaction.id]
+  
+  // Remove apenas valores automáticos, preserva os manuais
+  participants.value.forEach(participant => {
+    if (!isManualValue(transaction.id, participant.id)) {
+      if (splits) {
+        splits[participant.id] = 0
+      }
+      if (manuals) {
+        delete manuals[participant.id]
+      }
+    }
+  })
+}
+
+function canDivideAll(transaction: Transaction): boolean {
+  if (participants.value.length === 0) return false
+  
+  // Pode dividir se houver pelo menos um participante sem valor e não manual
+  return participants.value.some(p => {
+    const value = getSplitValue(transaction.id, p.id)
+    const isManual = isManualValue(transaction.id, p.id)
+    return value === 0 && !isManual
+  })
+}
+
+function canRemoveAll(transaction: Transaction): boolean {
+  if (!transactionSplits.value[transaction.id]) return false
+  
+  // Pode remover se houver pelo menos um valor automático (não manual) diferente de zero
+  return participants.value.some(p => {
+    const value = getSplitValue(transaction.id, p.id)
+    const isManual = isManualValue(transaction.id, p.id)
+    return value > 0 && !isManual
+  })
+}
+
+function toggleParticipantSplit(transaction: Transaction, participant: Participant) {
   const currentValue = getSplitValue(transaction.id, participant.id)
   
   if (currentValue > 0) {
-    // Se já tem valor, remove (zera) e recalcula para os outros
-    updateSplitValue(transaction.id, participant.id, 0)
-    
-    // Recalcula dividindo igualmente entre os que ainda têm valor
-    const participantsWithValue = participants.value.filter(p => {
-      const value = getSplitValue(transaction.id, p.id)
-      return value > 0 && p.id !== participant.id
-    })
-    
-    if (participantsWithValue.length > 0) {
-      const difference = getTransactionDifference(transaction)
-      const splitValues = MoneyCalculator.splitEqually(difference, participantsWithValue.length)
+    // Remove o valor (apenas se não for manual)
+    if (!isManualValue(transaction.id, participant.id)) {
+      updateSplitValueProgrammatically(transaction.id, participant.id, 0)
+      const manuals = manualValues.value[transaction.id]
+      if (manuals) {
+        delete manuals[participant.id]
+      }
       
-      participantsWithValue.forEach((p, index) => {
-        updateSplitValue(transaction.id, p.id, splitValues[index] || 0)
-      })
+      // Após remover, recalcula os automáticos restantes
+      recalculateAutomaticSplits(transaction)
     }
   } else {
-    // Se não tem valor, adiciona dividindo a diferença entre os selecionados
-    const participantsWithValue = participants.value.filter(p => 
-      getSplitValue(transaction.id, p.id) > 0
-    )
+    // Adiciona este participante aos automáticos e recalcula tudo
+    // Primeiro, marca como automático com valor temporário
+    updateSplitValueProgrammatically(transaction.id, participant.id, 1) // valor temporário apenas para marcar
     
-    // Inclui o participante atual na divisão
-    const participantsToSplit = [...participantsWithValue, participant]
-    const splitValues = MoneyCalculator.splitEqually(transaction.amount, participantsToSplit.length)
-    
-    participantsToSplit.forEach((p, index) => {
-      updateSplitValue(transaction.id, p.id, splitValues[index] || 0)
-    })
+    // Agora recalcula todos os automáticos
+    recalculateAutomaticSplits(transaction)
   }
+}
+
+function recalculateAutomaticSplits(transaction: Transaction) {
+  // 1. Calcula o total de valores manuais
+  let manualTotal = 0
+  participants.value.forEach(p => {
+    if (isManualValue(transaction.id, p.id)) {
+      manualTotal = MoneyCalculator.add(manualTotal, getSplitValue(transaction.id, p.id))
+    }
+  })
+  
+  // 2. Calcula o restante (total da transação - valores manuais)
+  const remaining = MoneyCalculator.subtract(transaction.amount, manualTotal)
+  
+  if (remaining <= 0) return
+  
+  // 3. Identifica participantes com valores automáticos (não manuais e > 0)
+  const automaticParticipants = participants.value.filter(p => {
+    const value = getSplitValue(transaction.id, p.id)
+    const isManual = isManualValue(transaction.id, p.id)
+    return value > 0 && !isManual
+  })
+  
+  if (automaticParticipants.length === 0) return
+  
+  // 4. Divide o restante igualmente entre todos os participantes automáticos
+  const splitValues = MoneyCalculator.splitEqually(remaining, automaticParticipants.length)
+  
+  // 5. Atualiza cada participante automático
+  automaticParticipants.forEach((p, index) => {
+    updateSplitValueProgrammatically(transaction.id, p.id, splitValues[index] || 0)
+  })
+}
+
+function updateSplitValueProgrammatically(transactionId: string, participantId: string, value: number) {
+  if (!transactionSplits.value[transactionId]) {
+    transactionSplits.value[transactionId] = {}
+  }
+  if (!manualValues.value[transactionId]) {
+    manualValues.value[transactionId] = {}
+  }
+  
+  transactionSplits.value[transactionId][participantId] = value
+  // NÃO marca como manual - é uma atualização programática
+  manualValues.value[transactionId][participantId] = false
 }
 
 function getTransactionDifference(transaction: Transaction): number {
@@ -186,7 +281,7 @@ function areAllTransactionsValid(): boolean {
 }
 
 async function saveInvoice() {
-  if (!invoice.value || !areAllTransactionsValid()) return
+  if (!invoice.value) return
 
   saving.value = true
   try {
@@ -219,9 +314,7 @@ async function saveInvoice() {
 
 async function saveAndClose() {
   await saveInvoice()
-  if (areAllTransactionsValid()) {
-    router.push('/')
-  }
+  router.push('/')
 }
 
 async function completeInvoice() {
@@ -463,19 +556,35 @@ onMounted(async () => {
                   {{ getTransactionDifference(transaction).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
                 </td>
                 <td class="text-center">
-                  <v-tooltip location="top">
-                    <template #activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        icon="mdi-calculator"
-                        size="small"
-                        variant="text"
-                        :disabled="isCompleted"
-                        @click="autoSplitTransaction(transaction)"
-                      />
-                    </template>
-                    <span>{{ t('invoice.split.divideAll') }}</span>
-                  </v-tooltip>
+                  <div class="d-flex align-center justify-center gap-1">
+                    <v-tooltip location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-calculator-variant"
+                          size="small"
+                          variant="text"
+                          :disabled="isCompleted || !canDivideAll(transaction)"
+                          @click="autoSplitTransaction(transaction)"
+                        />
+                      </template>
+                      <span>{{ t('invoice.split.divideAll') }}</span>
+                    </v-tooltip>
+                    <v-tooltip location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-eraser-variant"
+                          size="small"
+                          variant="text"
+                          color="error"
+                          :disabled="isCompleted || !canRemoveAll(transaction)"
+                          @click="removeAllSplits(transaction)"
+                        />
+                      </template>
+                      <span>{{ t('invoice.split.removeAll') }}</span>
+                    </v-tooltip>
+                  </div>
                 </td>
                 <td
                   v-for="participant in participants"
@@ -483,28 +592,45 @@ onMounted(async () => {
                   class="pa-1"
                 >
                   <div class="d-flex align-center gap-1">
-                    <MoneyInput
-                      :model-value="getSplitValue(transaction.id, participant.id)"
-                      @update:model-value="(val) => updateSplitValue(transaction.id, participant.id, val)"
-                      density="compact"
-                      hide-details
-                      variant="outlined"
-                      :disabled="isCompleted"
-                      style="max-width: 130px"
-                    />
-                    <v-tooltip location="top">
+                    <div style="position: relative; width: 130px;">
+                      <MoneyInput
+                        :model-value="getSplitValue(transaction.id, participant.id)"
+                        @update:model-value="(val) => updateSplitValue(transaction.id, participant.id, val)"
+                        density="compact"
+                        hide-details
+                        variant="outlined"
+                        :disabled="isCompleted"
+                        :color="isManualValue(transaction.id, participant.id) ? 'primary' : undefined"
+                      />
+                      <v-tooltip location="top" v-if="isManualValue(transaction.id, participant.id) && getSplitValue(transaction.id, participant.id) > 0">
+                        <template #activator="{ props }">
+                          <v-icon 
+                            v-bind="props"
+                            size="x-small" 
+                            color="primary" 
+                            style="position: absolute; top: 2px; right: 2px;"
+                          >
+                            mdi-pencil
+                          </v-icon>
+                        </template>
+                        <span>{{ t('invoice.split.manualValue') }}</span>
+                      </v-tooltip>
+                    </div>
+                    <v-tooltip location="top" v-if="!isManualValue(transaction.id, participant.id) || getSplitValue(transaction.id, participant.id) === 0">
                       <template #activator="{ props }">
                         <v-btn
                           v-bind="props"
-                          icon="mdi-calculator"
+                          :icon="getSplitValue(transaction.id, participant.id) > 0 ? 'mdi-minus' : 'mdi-plus'"
                           size="x-small"
                           variant="text"
+                          :color="getSplitValue(transaction.id, participant.id) > 0 ? 'error' : 'success'"
                           :disabled="isCompleted"
-                          @click="autoSplitForParticipant(transaction, participant)"
+                          @click="toggleParticipantSplit(transaction, participant)"
                         />
                       </template>
-                      <span>{{ t('invoice.split.select') }}</span>
+                      <span>{{ getSplitValue(transaction.id, participant.id) > 0 ? t('invoice.split.remove') : t('invoice.split.add') }}</span>
                     </v-tooltip>
+                    <div v-else style="width: 28px"></div>
                   </div>
                 </td>
               </tr>
