@@ -74,6 +74,7 @@
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { navigateTo } from '@/presentation/router'
 import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import { InvoiceStatus } from '@/core/domain/enums'
@@ -118,7 +119,7 @@ function formatCurrency(value: number): string {
 }
 
 function viewInvoice(id: string) {
-  router.push(`/invoice/${id}`)
+  navigateTo(router, `/invoice/${id}`)
 }
 
 async function confirmDelete(invoice: Invoice) {

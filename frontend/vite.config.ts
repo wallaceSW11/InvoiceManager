@@ -10,6 +10,10 @@ export default defineConfig({
     vuetify({ autoImport: true }),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: false, // Desabilita PWA em desenvolvimento para evitar cache issues
+        type: 'module'
+      },
       includeAssets: ['favicon.ico'],
       manifest: {
         name: 'Invoice Manager',
@@ -40,6 +44,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Não faz cache de navegação durante desenvolvimento
+        navigateFallback: undefined,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

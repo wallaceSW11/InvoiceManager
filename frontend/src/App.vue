@@ -61,6 +61,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { navigateTo } from '@/presentation/router'
 import ImportInvoiceDialog from '@/presentation/components/ImportInvoiceDialog.vue'
 import { useNotifyStore, useLoadingStore, useConfirmStore, ThemeToggle, useThemeSync } from "@lib"
 import { useThemeStore } from '@lib/stores/theme'
@@ -91,7 +92,7 @@ const navItems = computed(() => [
 
 async function handleInvoiceImported(invoiceId: string) {
   showImportDialog.value = false
-  await router.push(`/invoice/${invoiceId}`)
+  await navigateTo(router, `/invoice/${invoiceId}`)
 }
 
 function registerGlobalComponentRefs() {

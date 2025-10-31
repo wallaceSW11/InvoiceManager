@@ -16,7 +16,10 @@ app.use(router)
 app.use(vuetify)
 app.use(i18n)
 
-app.mount('#app')
+// Aguarda o router estar pronto antes de montar o app
+router.isReady().then(() => {
+  app.mount('#app')
+})
 
 // Register service worker
 registerSW({ immediate: true })

@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
+export * from './navigationHelper'
+
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -40,8 +42,12 @@ const router = createRouter({
   routes
 })
 
+// Navigation guard para atualizar o título da página
 router.beforeEach((_to, _from, next) => {
-  document.title = `InvoiceManager`
+  // Atualiza o título da página
+  document.title = 'InvoiceManager'
+  
+  // Continua com a navegação
   next()
 })
 
