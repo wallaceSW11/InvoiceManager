@@ -12,7 +12,7 @@ importers:
         specifier: ^7.4.47
         version: 7.4.47
       axios:
-        specifier: ^1.6.8
+        specifier: ^1.13.1
         version: 1.13.1
       big.js:
         specifier: ^7.0.1
@@ -27,20 +27,20 @@ importers:
         specifier: ^3.5.22
         version: 3.5.22(typescript@5.9.3)
       vue-i18n:
-        specifier: ^9.14.5
-        version: 9.14.5(vue@3.5.22(typescript@5.9.3))
+        specifier: ^11.1.12
+        version: 11.1.12(vue@3.5.22(typescript@5.9.3))
       vue-router:
         specifier: ^4.6.3
         version: 4.6.3(vue@3.5.22(typescript@5.9.3))
       vuetify:
-        specifier: ^3.10.7
+        specifier: ^3.10.8
         version: 3.10.8(typescript@5.9.3)(vite-plugin-vuetify@2.1.2)(vue@3.5.22(typescript@5.9.3))
     devDependencies:
       '@types/big.js':
         specifier: ^6.2.2
         version: 6.2.2
       '@types/node':
-        specifier: ^24.9.1
+        specifier: ^24.9.2
         version: 24.9.2
       '@vitejs/plugin-vue':
         specifier: ^6.0.1
@@ -52,7 +52,7 @@ importers:
         specifier: ~5.9.3
         version: 5.9.3
       vite:
-        specifier: ^7.1.7
+        specifier: ^7.1.12
         version: 7.1.12(@types/node@24.9.2)(terser@5.44.0)
       vite-plugin-pwa:
         specifier: ^1.1.0
@@ -61,7 +61,7 @@ importers:
         specifier: ^2.1.2
         version: 2.1.2(vite@7.1.12(@types/node@24.9.2)(terser@5.44.0))(vue@3.5.22(typescript@5.9.3))(vuetify@3.10.8)
       vue-tsc:
-        specifier: ^3.1.0
+        specifier: ^3.1.2
         version: 3.1.2(typescript@5.9.3)
       workbox-window:
         specifier: ^7.3.0
@@ -726,16 +726,16 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@intlify/core-base@9.14.5':
-    resolution: {integrity: sha512-5ah5FqZG4pOoHjkvs8mjtv+gPKYU0zCISaYNjBNNqYiaITxW8ZtVih3GS/oTOqN8d9/mDLyrjD46GBApNxmlsA==}
+  '@intlify/core-base@11.1.12':
+    resolution: {integrity: sha512-whh0trqRsSqVLNEUCwU59pyJZYpU8AmSWl8M3Jz2Mv5ESPP6kFh4juas2NpZ1iCvy7GlNRffUD1xr84gceimjg==}
     engines: {node: '>= 16'}
 
-  '@intlify/message-compiler@9.14.5':
-    resolution: {integrity: sha512-IHzgEu61/YIpQV5Pc3aRWScDcnFKWvQA9kigcINcCBXN8mbW+vk9SK+lDxA6STzKQsVJxUPg9ACC52pKKo3SVQ==}
+  '@intlify/message-compiler@11.1.12':
+    resolution: {integrity: sha512-Fv9iQSJoJaXl4ZGkOCN1LDM3trzze0AS2zRz2EHLiwenwL6t0Ki9KySYlyr27yVOj5aVz0e55JePO+kELIvfdQ==}
     engines: {node: '>= 16'}
 
-  '@intlify/shared@9.14.5':
-    resolution: {integrity: sha512-9gB+E53BYuAEMhbCAxVgG38EZrk59sxBtv3jSizNL2hEWlgjBjAw1AwpLHtNaeda12pe6W20OGEa0TwuMSRbyQ==}
+  '@intlify/shared@11.1.12':
+    resolution: {integrity: sha512-Om86EjuQtA69hdNj3GQec9ZC0L0vPSAnXzB3gP/gyJ7+mA7t06d9aOAiqMZ+xEOsumGP4eEBlfl8zF2LOTzf2A==}
     engines: {node: '>= 16'}
 
   '@jridgewell/gen-mapping@0.3.13':
@@ -1983,8 +1983,8 @@ packages:
   vscode-uri@3.1.0:
     resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
 
-  vue-i18n@9.14.5:
-    resolution: {integrity: sha512-0jQ9Em3ymWngyiIkj0+c/k7WgaPO+TNzjKSNq9BvBQaKJECqn9cd9fL4tkDhB5G1QBskGl9YxxbDAhgbFtpe2g==}
+  vue-i18n@11.1.12:
+    resolution: {integrity: sha512-BnstPj3KLHLrsqbVU2UOrPmr0+Mv11bsUZG0PyCOzsawCivk8W00GMXHeVUWIDOgNaScCuZah47CZFE+Wnl8mw==}
     engines: {node: '>= 16'}
     peerDependencies:
       vue: ^3.0.0
@@ -2841,17 +2841,17 @@ snapshots:
   '@esbuild/win32-x64@0.25.11':
     optional: true
 
-  '@intlify/core-base@9.14.5':
+  '@intlify/core-base@11.1.12':
     dependencies:
-      '@intlify/message-compiler': 9.14.5
-      '@intlify/shared': 9.14.5
+      '@intlify/message-compiler': 11.1.12
+      '@intlify/shared': 11.1.12
 
-  '@intlify/message-compiler@9.14.5':
+  '@intlify/message-compiler@11.1.12':
     dependencies:
-      '@intlify/shared': 9.14.5
+      '@intlify/shared': 11.1.12
       source-map-js: 1.2.1
 
-  '@intlify/shared@9.14.5': {}
+  '@intlify/shared@11.1.12': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -4198,10 +4198,10 @@ snapshots:
 
   vscode-uri@3.1.0: {}
 
-  vue-i18n@9.14.5(vue@3.5.22(typescript@5.9.3)):
+  vue-i18n@11.1.12(vue@3.5.22(typescript@5.9.3)):
     dependencies:
-      '@intlify/core-base': 9.14.5
-      '@intlify/shared': 9.14.5
+      '@intlify/core-base': 11.1.12
+      '@intlify/shared': 11.1.12
       '@vue/devtools-api': 6.6.4
       vue: 3.5.22(typescript@5.9.3)
 
