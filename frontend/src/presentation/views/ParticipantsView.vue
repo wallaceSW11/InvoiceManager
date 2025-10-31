@@ -83,10 +83,12 @@ import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { usePhoneMask } from '@/presentation/composables/usePhoneMask'
 import type { Participant } from '@/core/domain/entities'
 import ModalBase from '@/presentation/components/ModalBase.vue'
+import { useGlobals } from '@lib'
 
 const { t } = useI18n()
 const participantStore = useParticipantStore()
 const { formatPhone, unformatPhone, validatePhone } = usePhoneMask()
+const { notify } = useGlobals()
 
 const headers = computed(() => [
   { title: t('participants.name'), key: 'name' },
@@ -151,6 +153,7 @@ async function saveParticipant() {
         ...form.value,
         phoneNumber: cleanPhone
       })
+      notify('success', t('common.success'), t('participants.messages.updated'))
       // Em edição, fecha o modal
       dialog.value = false
       editingParticipant.value = null
@@ -159,6 +162,7 @@ async function saveParticipant() {
         ...form.value,
         phoneNumber: cleanPhone
       })
+      notify('success', t('common.success'), t('participants.messages.created'))
       // Em novo cadastro, mantém o modal aberto e limpa os campos
       form.value = { name: '', phoneNumber: '' }
       formRef.value?.resetValidation()
@@ -169,6 +173,7 @@ async function saveParticipant() {
     }
   } catch (error) {
     console.error('Error saving participant:', error)
+    notify('error', t('common.error'), t('participants.messages.error'))
   }
 }
 
@@ -176,8 +181,10 @@ async function confirmDelete(participant: Participant) {
   if (confirm(t('participants.deleteConfirm', { name: participant.name }))) {
     try {
       await participantStore.deleteParticipant(participant.id)
+      notify('success', t('common.success'), t('participants.messages.deleted'))
     } catch (error) {
       console.error('Error deleting participant:', error)
+      notify('error', t('common.error'), t('participants.messages.error'))
     }
   }
 }

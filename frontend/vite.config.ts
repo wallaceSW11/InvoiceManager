@@ -10,6 +10,10 @@ export default defineConfig({
     vuetify({ autoImport: true }),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: false, // Desabilita PWA em desenvolvimento para evitar cache issues
+        type: 'module'
+      },
       includeAssets: ['favicon.ico'],
       manifest: {
         name: 'Invoice Manager',
@@ -40,6 +44,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Não faz cache de navegação durante desenvolvimento
+        navigateFallback: undefined,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -61,7 +67,38 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      "@lib": fileURLToPath(new URL("./src/lib", import.meta.url)),
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Separa node_modules em chunks específicos
+          if (id.includes('node_modules')) {
+            // Vuetify e seus componentes
+            if (id.includes('vuetify')) {
+              return 'vuetify';
+            }
+            // Vue core (vue, vue-router, pinia)
+            if (id.includes('vue-router') || id.includes('pinia')) {
+              return 'vue-vendor';
+            }
+            if (id.includes('node_modules/vue/')) {
+              return 'vue-vendor';
+            }
+            // i18n
+            if (id.includes('vue-i18n')) {
+              return 'i18n';
+            }
+            // Outras dependências grandes
+            return 'vendor';
+          }
+        }
+      }
+    },
+    // Aumenta o limite do aviso para chunks maiores
+    chunkSizeWarningLimit: 700,
   }
 })

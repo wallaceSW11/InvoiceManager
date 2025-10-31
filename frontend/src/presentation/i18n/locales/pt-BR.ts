@@ -129,6 +129,7 @@ export default {
       selectFile: 'Selecione o arquivo TXT',
       parseErrors: 'Erros ao processar arquivo:',
       noTransactions: 'Nenhuma transação encontrada no arquivo',
+      alreadyExists: 'Esta fatura já foi importada',
       import: 'Importar',
       formatInfo: {
         title: 'Formato do arquivo:',
@@ -146,6 +147,10 @@ export default {
         amount: 'Valor',
         total: 'Total',
         button: 'Visualizar'
+      },
+      messages: {
+        success: 'Fatura importada com sucesso',
+        error: 'Erro ao importar fatura'
       }
     },
     card: 'Cartão',
@@ -181,6 +186,10 @@ export default {
     statuses: {
       pending: 'Pendente',
       completed: 'Finalizada'
+    },
+    messages: {
+      deleted: 'Fatura excluída com sucesso',
+      error: 'Erro ao gerenciar fatura'
     }
   },
   theme: {

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { navigateTo } from '@/presentation/router'
 import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { useCardStore } from '@/presentation/stores/cardStore'
@@ -314,7 +315,7 @@ async function saveInvoice() {
 
 async function saveAndClose() {
   await saveInvoice()
-  router.push('/')
+  await navigateTo(router, '/')
 }
 
 async function completeInvoice() {

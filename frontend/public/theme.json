@@ -1,0 +1,42 @@
+{
+  "name": "Vue3 Base Theme",
+  "version": "1.0.0",
+  "logo": {
+    "light": "/logo-light.svg",
+    "dark": "/logo-dark.svg",
+    "favicon": "/favicon.ico"
+  },
+  "colors": {
+    "light": {
+      "primary": "#1867C0",
+      "secondary": "#5CBBF6",
+      "accent": "#005CAF",
+      "error": "#FF5252",
+      "info": "#2196F3",
+      "success": "#4CAF50",
+      "warning": "#FB8C00",
+      "background": "#FFFFFF",
+      "surface": "#FFFFFF"
+    },
+    "dark": {
+      "primary": "#2196F3",
+      "secondary": "#424242",
+      "accent": "#82B1FF",
+      "error": "#FF5252",
+      "info": "#2196F3",
+      "success": "#4CAF50",
+      "warning": "#FFA726",
+      "background": "#121212",
+      "surface": "#212121"
+    }
+  },
+  "fonts": {
+    "primary": "Roboto, sans-serif",
+    "monospace": "Courier New, monospace"
+  },
+  "customization": {
+    "appName": "Vue3 TypeScript Base",
+    "appDescription": "A professional Vue 3 + TypeScript starter kit",
+    "copyrightText": "© 2025 Vue3 Base. All rights reserved."
+  }
+}

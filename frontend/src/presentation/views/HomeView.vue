@@ -8,19 +8,19 @@
 
     <v-row>
       <v-col cols="12" md="4">
-        <v-card @click="router.push('/cards')" style="cursor: pointer">
+        <v-card @click="handleNavigate('/cards')" style="cursor: pointer" hover>
           <v-card-title>{{ t('home.stats.cards') }}</v-card-title>
           <v-card-text class="text-h4">{{ cardStore.cardCount }}</v-card-text>
         </v-card>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card @click="router.push('/participants')" style="cursor: pointer">
+        <v-card @click="handleNavigate('/participants')" style="cursor: pointer" hover>
           <v-card-title>{{ t('home.stats.participants') }}</v-card-title>
           <v-card-text class="text-h4">{{ participantStore.participantCount }}</v-card-text>
         </v-card>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card @click="router.push('/invoices')" style="cursor: pointer">
+        <v-card @click="handleNavigate('/invoices')" style="cursor: pointer" hover>
           <v-card-title>{{ t('home.stats.invoices') }}</v-card-title>
           <v-card-text class="text-h4">{{ invoiceStore.invoiceCount }}</v-card-text>
         </v-card>
@@ -33,6 +33,7 @@
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { navigateTo } from '@/presentation/router'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
@@ -42,6 +43,10 @@ const router = useRouter()
 const cardStore = useCardStore()
 const participantStore = useParticipantStore()
 const invoiceStore = useInvoiceStore()
+
+function handleNavigate(path: string) {
+  navigateTo(router, path)
+}
 
 onMounted(async () => {
   await Promise.all([

@@ -129,6 +129,7 @@ export default {
       selectFile: 'Select TXT file',
       parseErrors: 'Errors parsing file:',
       noTransactions: 'No transactions found in file',
+      alreadyExists: 'This invoice has already been imported',
       import: 'Import',
       formatInfo: {
         title: 'File format:',
@@ -146,6 +147,10 @@ export default {
         amount: 'Amount',
         total: 'Total',
         button: 'Preview'
+      },
+      messages: {
+        success: 'Invoice imported successfully',
+        error: 'Error importing invoice'
       }
     },
     card: 'Card',
@@ -181,6 +186,10 @@ export default {
     statuses: {
       pending: 'Pending',
       completed: 'Completed'
+    },
+    messages: {
+      deleted: 'Invoice deleted successfully',
+      error: 'Error managing invoice'
     }
   },
   theme: {
