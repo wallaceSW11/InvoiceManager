@@ -10,10 +10,13 @@ export function useThemeSync() {
     if (!themeStore.themeConfig) return;
 
     const colors = themeStore.currentColors;
+    const theme = vuetifyTheme.themes.value[themeStore.currentMode];
+    if (!theme) return;
+
     Object.keys(colors).forEach((key) => {
-      if (vuetifyTheme.themes.value[themeStore.currentMode]) {
-        vuetifyTheme.themes.value[themeStore.currentMode].colors[key] =
-          colors[key];
+      const colorValue = colors[key];
+      if (colorValue !== undefined) {
+        theme.colors[key] = colorValue;
       }
     });
   }

@@ -4,7 +4,7 @@ import ptBR from './locales/pt-BR'
 
 export type MessageSchema = typeof enUS
 
-const i18n = createI18n<[MessageSchema], 'en-US' | 'pt-BR'>({
+export const i18n = createI18n<[MessageSchema], 'en-US' | 'pt-BR'>({
   legacy: false,
   locale: 'pt-BR',
   fallbackLocale: 'en-US',
@@ -18,6 +18,5 @@ export const availableLocales = [
   { code: "pt-BR", name: "Português (Brasil)", countryCode: "BR" },
   { code: "en-US", name: "English (US)", countryCode: "US" },
 ] as const;
-
 
 export default i18n

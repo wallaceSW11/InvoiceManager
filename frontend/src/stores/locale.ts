@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
-import { i18n } from "@/plugins/i18n";
-import { defaultLocale, type LocaleCode } from "@/locales";
+import { i18n } from "@/presentation/i18n";
+import { defaultLocale, type LocaleCode } from "@lib/locales";
 
 const LOCALE_STORAGE_KEY = "app-locale";
 
@@ -23,7 +23,7 @@ function loadSavedLocaleOrDetect(): LocaleCode {
 }
 
 function syncLocaleWithI18n(locale: LocaleCode) {
-  i18n.global.locale.value = locale;
+  (i18n.global.locale as any).value = locale as 'en-US' | 'pt-BR';
 }
 
 function persistLocale(locale: LocaleCode) {
