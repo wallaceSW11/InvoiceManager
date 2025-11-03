@@ -181,6 +181,8 @@ export default {
       generate: 'Gerar Mensagens',
       copy: 'Copiar',
       copied: 'Copiado!',
+      copyAll: 'Copiar Resumo Completo',
+      copiedAll: 'Resumo Copiado!',
       send: 'Enviar no WhatsApp'
     },
     statuses: {
@@ -190,7 +192,10 @@ export default {
     messages: {
       deleted: 'Fatura excluída com sucesso',
       error: 'Erro ao gerenciar fatura'
-    }
+    },
+    saved: 'Fatura salva',
+    savedMessage: 'A fatura foi salva com sucesso',
+    saveError: 'Erro ao salvar a fatura'
   },
   theme: {
     toggle: 'Alternar tema',

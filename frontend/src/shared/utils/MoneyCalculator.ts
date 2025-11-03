@@ -52,6 +52,7 @@ export class MoneyCalculator {
    * Divide um valor igualmente entre N participantes
    * Garante que a soma dos valores divididos seja exatamente igual ao total
    * O último participante recebe o ajuste para compensar arredondamentos
+   * Funciona com valores positivos e negativos (para estornos)
    */
   static splitEqually(total: number, numberOfParts: number): number[] {
     if (numberOfParts <= 0) throw new Error('Number of parts must be positive')

@@ -48,19 +48,25 @@ const emit = defineEmits<{
 const formattedValue = ref('R$ 0,00')
 
 function formatMoney(value: number): string {
-  return 'R$ ' + value.toLocaleString('pt-BR', {
+  const absValue = Math.abs(value)
+  const formatted = absValue.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
+  return value < 0 ? '-R$ ' + formatted : 'R$ ' + formatted
 }
 
 function parseMoneyInput(input: string): number {
+  // Verifica se é negativo
+  const isNegative = input.includes('-')
+  
   // Remove tudo exceto números
   const numbers = input.replace(/\D/g, '')
   if (!numbers) return 0
   
   // Converte para número (últimos 2 dígitos são centavos)
-  return parseInt(numbers) / 100
+  const value = parseInt(numbers) / 100
+  return isNegative ? -value : value
 }
 
 function handleInput(value: string) {
