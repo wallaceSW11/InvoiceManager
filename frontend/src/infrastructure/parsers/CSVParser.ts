@@ -93,7 +93,7 @@ export class CSVParser {
     const cleaned = amountStr.replace(/\./g, '').replace(',', '.')
     const amount = parseFloat(cleaned)
 
-    if (isNaN(amount) || amount < 0) {
+    if (isNaN(amount)) {
       throw new Error(`Invalid amount: ${amountStr}`)
     }
 

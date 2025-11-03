@@ -10,6 +10,7 @@ import { SplitMode, InvoiceStatus } from '@/core/domain/enums'
 import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities'
 import { MoneyCalculator } from '@/shared/utils/MoneyCalculator'
 import MoneyInput from '@/presentation/components/common/MoneyInput.vue'
+import { notify } from '@/lib/utils'
 
 
 const { t } = useI18n()
@@ -128,7 +129,7 @@ function autoSplitTransaction(transaction: Transaction) {
   const currentTotal = getTransactionTotal(transaction)
   const remaining = MoneyCalculator.subtract(transaction.amount, currentTotal)
   
-  if (remaining <= 0) return
+  if (remaining === 0) return
 
   // Divide o restante entre os participantes sem valor
   if (!transactionSplits.value[transaction.id]) {
@@ -186,14 +187,14 @@ function canRemoveAll(transaction: Transaction): boolean {
   return participants.value.some(p => {
     const value = getSplitValue(transaction.id, p.id)
     const isManual = isManualValue(transaction.id, p.id)
-    return value > 0 && !isManual
+    return value !== 0 && !isManual
   })
 }
 
 function toggleParticipantSplit(transaction: Transaction, participant: Participant) {
   const currentValue = getSplitValue(transaction.id, participant.id)
   
-  if (currentValue > 0) {
+  if (currentValue !== 0) {
     // Remove o valor (apenas se não for manual)
     if (!isManualValue(transaction.id, participant.id)) {
       updateSplitValueProgrammatically(transaction.id, participant.id, 0)
@@ -227,13 +228,13 @@ function recalculateAutomaticSplits(transaction: Transaction) {
   // 2. Calcula o restante (total da transação - valores manuais)
   const remaining = MoneyCalculator.subtract(transaction.amount, manualTotal)
   
-  if (remaining <= 0) return
+  if (remaining === 0) return
   
-  // 3. Identifica participantes com valores automáticos (não manuais e > 0)
+  // 3. Identifica participantes com valores automáticos (não manuais e != 0)
   const automaticParticipants = participants.value.filter(p => {
     const value = getSplitValue(transaction.id, p.id)
     const isManual = isManualValue(transaction.id, p.id)
-    return value > 0 && !isManual
+    return value !== 0 && !isManual
   })
   
   if (automaticParticipants.length === 0) return
@@ -291,7 +292,7 @@ async function saveInvoice() {
       splits: participants.value
         .map(participant => {
           const amount = getSplitValue(transaction.id, participant.id)
-          if (amount > 0) {
+          if (amount !== 0) {
             return {
               participantId: participant.id,
               amount,
@@ -306,8 +307,11 @@ async function saveInvoice() {
     await invoiceStore.updateInvoice(invoice.value.id, {
       transactions: updatedTransactions
     })
+    
+    notify('success', t('invoice.saved'), t('invoice.savedMessage'))
   } catch (error) {
     console.error('Error saving invoice:', error)
+    notify('error', t('common.error'), t('invoice.saveError'))
   } finally {
     saving.value = false
   }
@@ -358,7 +362,7 @@ function generateWhatsAppMessages() {
 
     invoice.value!.transactions.forEach(transaction => {
       const splitAmount = getSplitValue(transaction.id, participant.id)
-      if (splitAmount > 0) {
+      if (splitAmount !== 0) {
         const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR')
         const amountStr = splitAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
         message += `• ${dateStr} - ${transaction.description}: ${amountStr}\n`
@@ -386,6 +390,57 @@ async function copyToClipboard(participantId: string) {
     }, 2000)
   } catch (error) {
     console.error('Error copying to clipboard:', error)
+  }
+}
+
+async function copyAllMessages() {
+  if (!invoice.value || !card.value) return
+
+  const cardName = `${card.value.nickname} (*${card.value.lastFourDigits})`
+  const dueDate = new Date(invoice.value.dueDate).toLocaleDateString('pt-BR')
+  
+  let fullMessage = `📄 RESUMO COMPLETO DA FATURA\n`
+  fullMessage += `Cartão: ${cardName}\n`
+  fullMessage += `Vencimento: ${dueDate}\n`
+  fullMessage += `${'='.repeat(50)}\n\n`
+
+  const participantsWithValues = participants.value.filter(p => (totalsByParticipant.value[p.id] || 0) !== 0)
+  
+  participantsWithValues.forEach((participant, index) => {
+    const total = totalsByParticipant.value[participant.id] || 0
+    const totalStr = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    
+    fullMessage += `👤 ${participant.name.toUpperCase()}\n`
+    fullMessage += `${'-'.repeat(50)}\n`
+    
+    invoice.value!.transactions.forEach(transaction => {
+      const splitAmount = getSplitValue(transaction.id, participant.id)
+      if (splitAmount !== 0) {
+        const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR')
+        const amountStr = splitAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        fullMessage += `  • ${dateStr} - ${transaction.description}: ${amountStr}\n`
+      }
+    })
+    
+    fullMessage += `\n  💰 TOTAL: ${totalStr}\n`
+    
+    if (index < participantsWithValues.length - 1) {
+      fullMessage += `\n${'='.repeat(50)}\n\n`
+    }
+  })
+
+  const grandTotalStr = grandTotal.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  fullMessage += `\n${'='.repeat(50)}\n`
+  fullMessage += `💵 TOTAL GERAL DA FATURA: ${grandTotalStr}`
+
+  try {
+    await navigator.clipboard.writeText(fullMessage)
+    copiedParticipantId.value = 'all'
+    setTimeout(() => {
+      copiedParticipantId.value = null
+    }, 2000)
+  } catch (error) {
+    console.error('Error copying all messages to clipboard:', error)
   }
 }
 
@@ -603,7 +658,7 @@ onMounted(async () => {
                         :disabled="isCompleted"
                         :color="isManualValue(transaction.id, participant.id) ? 'primary' : undefined"
                       />
-                      <v-tooltip location="top" v-if="isManualValue(transaction.id, participant.id) && getSplitValue(transaction.id, participant.id) > 0">
+                      <v-tooltip location="top" v-if="isManualValue(transaction.id, participant.id) && getSplitValue(transaction.id, participant.id) !== 0">
                         <template #activator="{ props }">
                           <v-icon 
                             v-bind="props"
@@ -621,15 +676,15 @@ onMounted(async () => {
                       <template #activator="{ props }">
                         <v-btn
                           v-bind="props"
-                          :icon="getSplitValue(transaction.id, participant.id) > 0 ? 'mdi-minus' : 'mdi-plus'"
+                          :icon="getSplitValue(transaction.id, participant.id) !== 0 ? 'mdi-minus' : 'mdi-plus'"
                           size="x-small"
                           variant="text"
-                          :color="getSplitValue(transaction.id, participant.id) > 0 ? 'error' : 'success'"
+                          :color="getSplitValue(transaction.id, participant.id) !== 0 ? 'error' : 'success'"
                           :disabled="isCompleted"
                           @click="toggleParticipantSplit(transaction, participant)"
                         />
                       </template>
-                      <span>{{ getSplitValue(transaction.id, participant.id) > 0 ? t('invoice.split.remove') : t('invoice.split.add') }}</span>
+                      <span>{{ getSplitValue(transaction.id, participant.id) !== 0 ? t('invoice.split.remove') : t('invoice.split.add') }}</span>
                     </v-tooltip>
                     <div v-else style="width: 28px"></div>
                   </div>
@@ -673,11 +728,22 @@ onMounted(async () => {
     <!-- WhatsApp Dialog -->
     <v-dialog v-model="showWhatsAppDialog" max-width="800">
       <v-card>
-        <v-card-title>{{ t('invoice.whatsapp.title') }}</v-card-title>
+        <v-card-title class="d-flex justify-space-between align-center">
+          <span>{{ t('invoice.whatsapp.title') }}</span>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-content-copy"
+            @click="copyAllMessages"
+            size="small"
+          >
+            {{ copiedParticipantId === 'all' ? t('invoice.whatsapp.copiedAll') : t('invoice.whatsapp.copyAll') }}
+          </v-btn>
+        </v-card-title>
         <v-card-text>
           <v-expansion-panels>
             <v-expansion-panel
-              v-for="participant in participants.filter(p => (totalsByParticipant[p.id] || 0) > 0)"
+              v-for="participant in participants.filter(p => (totalsByParticipant[p.id] || 0) !== 0)"
               :key="participant.id"
             >
               <v-expansion-panel-title>

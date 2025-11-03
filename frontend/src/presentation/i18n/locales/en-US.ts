@@ -181,6 +181,8 @@ export default {
       generate: 'Generate Messages',
       copy: 'Copy',
       copied: 'Copied!',
+      copyAll: 'Copy Full Summary',
+      copiedAll: 'Summary Copied!',
       send: 'Send on WhatsApp'
     },
     statuses: {
@@ -190,7 +192,10 @@ export default {
     messages: {
       deleted: 'Invoice deleted successfully',
       error: 'Error managing invoice'
-    }
+    },
+    saved: 'Invoice saved',
+    savedMessage: 'Invoice has been saved successfully',
+    saveError: 'Error saving invoice'
   },
   theme: {
     toggle: 'Toggle theme',
