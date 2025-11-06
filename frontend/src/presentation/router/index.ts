@@ -34,6 +34,18 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/presentation/views/InvoiceDetailView.vue'),
     meta: { titleKey: 'invoice.detail' },
     props: true
+  },
+  {
+    path: '/export',
+    name: 'export',
+    component: () => import('@/presentation/views/ExportView.vue'),
+    meta: { titleKey: 'nav.export' }
+  },
+  {
+    path: '/import',
+    name: 'import',
+    component: () => import('@/presentation/views/ImportView.vue'),
+    meta: { titleKey: 'nav.import' }
   }
 ]
 

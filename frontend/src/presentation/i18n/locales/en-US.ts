@@ -7,7 +7,9 @@ export default {
     home: 'Dashboard',
     cards: 'Cards',
     participants: 'Participants',
-    invoices: 'Invoices'
+    invoices: 'Invoices',
+    export: 'Export',
+    import: 'Import'
   },
   common: {
     add: 'Add',
@@ -196,6 +198,35 @@ export default {
     saved: 'Invoice saved',
     savedMessage: 'Invoice has been saved',
     saveError: 'Failed to save invoice'
+  },
+  export: {
+    title: 'Export Data',
+    description: 'Select the data you want to export. Files will be downloaded in JSON format.',
+    cards: 'Cards',
+    participants: 'Participants',
+    invoices: 'Invoices',
+    exportButton: 'Export',
+    noData: 'No data available to export',
+    success: '{count} file(s) exported',
+    error: 'Failed to export data'
+  },
+  import: {
+    title: 'Import Data',
+    description: 'Select JSON files to import. Existing data will be updated or new ones will be created.',
+    warning: 'Warning: If a record with the same ID already exists, it will be updated with the file data.',
+    cards: 'Cards',
+    participants: 'Participants',
+    invoices: 'Invoices',
+    selectFile: 'Select file',
+    importButton: 'Import',
+    cardSuccess: '1 card imported',
+    cardsSuccess: '{count} cards imported',
+    participantSuccess: '1 participant imported',
+    participantsSuccess: '{count} participants imported',
+    invoiceSuccess: '1 invoice imported',
+    invoicesSuccess: '{count} invoices imported',
+    importedAt: 'Imported at {time}',
+    error: 'Failed to import data'
   },
   theme: {
     toggle: 'Toggle theme',

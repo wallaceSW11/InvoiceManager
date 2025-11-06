@@ -7,7 +7,9 @@ export default {
     home: 'Dashboard',
     cards: 'Cartões',
     participants: 'Participantes',
-    invoices: 'Faturas'
+    invoices: 'Faturas',
+    export: 'Exportar',
+    import: 'Importar'
   },
   common: {
     add: 'Adicionar',
@@ -196,6 +198,35 @@ export default {
     saved: 'Fatura salva',
     savedMessage: 'A fatura foi salva',
     saveError: 'Falha ao salvar a fatura'
+  },
+  export: {
+    title: 'Exportar Dados',
+    description: 'Selecione os dados que deseja exportar. Os arquivos serão baixados no formato JSON.',
+    cards: 'Cartões',
+    participants: 'Participantes',
+    invoices: 'Faturas',
+    exportButton: 'Exportar',
+    noData: 'Não há dados disponíveis para exportar',
+    success: '{count} arquivo(s) exportado(s)',
+    error: 'Falha ao exportar dados'
+  },
+  import: {
+    title: 'Importar Dados',
+    description: 'Selecione os arquivos JSON para importar. Os dados existentes serão atualizados ou novos serão criados.',
+    warning: 'Atenção: Se um registro com o mesmo ID já existir, ele será atualizado com os dados do arquivo.',
+    cards: 'Cartões',
+    participants: 'Participantes',
+    invoices: 'Faturas',
+    selectFile: 'Selecionar arquivo',
+    importButton: 'Importar',
+    cardSuccess: '1 cartão importado',
+    cardsSuccess: '{count} cartões importados',
+    participantSuccess: '1 participante importado',
+    participantsSuccess: '{count} participantes importados',
+    invoiceSuccess: '1 fatura importada',
+    invoicesSuccess: '{count} faturas importadas',
+    importedAt: 'Importado às {time}',
+    error: 'Falha ao importar dados'
   },
   theme: {
     toggle: 'Alternar tema',
