@@ -2,10 +2,8 @@ export function usePhoneMask() {
   function formatPhone(value: string): string {
     if (!value) return ''
     
-    // Remove tudo que não é número
     const cleaned = value.replace(/\D/g, '')
     
-    // Aplica a máscara (xx) xxxxx-xxxx
     if (cleaned.length <= 2) {
       return cleaned
     } else if (cleaned.length <= 7) {
@@ -14,7 +12,6 @@ export function usePhoneMask() {
       return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`
     }
     
-    // Limita a 11 dígitos
     return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`
   }
   

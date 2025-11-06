@@ -7,7 +7,9 @@ export default {
     home: 'Dashboard',
     cards: 'Cards',
     participants: 'Participants',
-    invoices: 'Invoices'
+    invoices: 'Invoices',
+    export: 'Export',
+    import: 'Import'
   },
   common: {
     add: 'Add',
@@ -51,10 +53,10 @@ export default {
       lastDigitsInvalid: 'Must be exactly 4 digits'
     },
     messages: {
-      created: 'Card created successfully',
-      updated: 'Card updated successfully',
-      deleted: 'Card deleted successfully',
-      error: 'Error managing card'
+      created: 'Card created',
+      updated: 'Card updated',
+      deleted: 'Card deleted',
+      error: 'Failed to manage card'
     }
   },
   participants: {
@@ -75,10 +77,10 @@ export default {
       phoneInvalid: 'Invalid phone number'
     },
     messages: {
-      created: 'Participant created successfully',
-      updated: 'Participant updated successfully',
-      deleted: 'Participant deleted successfully',
-      error: 'Error managing participant'
+      created: 'Participant created',
+      updated: 'Participant updated',
+      deleted: 'Participant deleted',
+      error: 'Failed to manage participant'
     }
   },
   home: {
@@ -149,8 +151,8 @@ export default {
         button: 'Preview'
       },
       messages: {
-        success: 'Invoice imported successfully',
-        error: 'Error importing invoice'
+        success: 'Invoice imported',
+        error: 'Failed to import invoice'
       }
     },
     card: 'Card',
@@ -190,12 +192,41 @@ export default {
       completed: 'Completed'
     },
     messages: {
-      deleted: 'Invoice deleted successfully',
-      error: 'Error managing invoice'
+      deleted: 'Invoice deleted',
+      error: 'Failed to manage invoice'
     },
     saved: 'Invoice saved',
-    savedMessage: 'Invoice has been saved successfully',
-    saveError: 'Error saving invoice'
+    savedMessage: 'Invoice has been saved',
+    saveError: 'Failed to save invoice'
+  },
+  export: {
+    title: 'Export Data',
+    description: 'Select the data you want to export. Files will be downloaded in JSON format.',
+    cards: 'Cards',
+    participants: 'Participants',
+    invoices: 'Invoices',
+    exportButton: 'Export',
+    noData: 'No data available to export',
+    success: '{count} file(s) exported',
+    error: 'Failed to export data'
+  },
+  import: {
+    title: 'Import Data',
+    description: 'Select JSON files to import. Existing data will be updated or new ones will be created.',
+    warning: 'Warning: If a record with the same ID already exists, it will be updated with the file data.',
+    cards: 'Cards',
+    participants: 'Participants',
+    invoices: 'Invoices',
+    selectFile: 'Select file',
+    importButton: 'Import',
+    cardSuccess: '1 card imported',
+    cardsSuccess: '{count} cards imported',
+    participantSuccess: '1 participant imported',
+    participantsSuccess: '{count} participants imported',
+    invoiceSuccess: '1 invoice imported',
+    invoicesSuccess: '{count} invoices imported',
+    importedAt: 'Imported at {time}',
+    error: 'Failed to import data'
   },
   theme: {
     toggle: 'Toggle theme',

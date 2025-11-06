@@ -57,14 +57,11 @@ function formatMoney(value: number): string {
 }
 
 function parseMoneyInput(input: string): number {
-  // Verifica se é negativo
   const isNegative = input.includes('-')
   
-  // Remove tudo exceto números
   const numbers = input.replace(/\D/g, '')
   if (!numbers) return 0
   
-  // Converte para número (últimos 2 dígitos são centavos)
   const value = parseInt(numbers) / 100
   return isNegative ? -value : value
 }
@@ -89,7 +86,6 @@ function handleClick(event: MouseEvent) {
   })
 }
 
-// Atualiza o valor formatado quando o modelValue muda
 watch(() => props.modelValue, (newVal) => {
   const value = newVal ?? 0
   formattedValue.value = formatMoney(value)

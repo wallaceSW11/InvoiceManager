@@ -75,7 +75,6 @@ const router = useRouter()
 const themeStore = useThemeStore()
 const storageAvailable = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
-// Sincroniza o tema com o Vuetify automaticamente
 useThemeSync()
 
 const showImportDialog = ref(false)
@@ -88,6 +87,8 @@ const navItems = computed(() => [
   { icon: 'mdi-credit-card', title: t('nav.cards'), to: '/cards' },
   { icon: 'mdi-account-group', title: t('nav.participants'), to: '/participants' },
   { icon: 'mdi-file-document-multiple', title: t('nav.invoices'), to: '/invoices' },
+  { icon: 'mdi-download', title: t('nav.export'), to: '/export' },
+  { icon: 'mdi-upload', title: t('nav.import'), to: '/import' },
 ])
 
 async function handleInvoiceImported(invoiceId: string) {

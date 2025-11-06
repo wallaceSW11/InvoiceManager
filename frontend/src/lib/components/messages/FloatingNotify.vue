@@ -25,7 +25,6 @@ const currentMessage = ref('')
 let timeoutId: ReturnType<typeof setTimeout> | null = null
 
 const show = (type: NotifyType, title: string, message: string) => {
-  // Clear existing timeout if any
   if (timeoutId) {
     clearTimeout(timeoutId)
   }
@@ -35,7 +34,6 @@ const show = (type: NotifyType, title: string, message: string) => {
   currentMessage.value = message
   isVisible.value = true
 
-  // Auto-hide after 3 seconds
   timeoutId = setTimeout(() => {
     hide()
   }, 3000)

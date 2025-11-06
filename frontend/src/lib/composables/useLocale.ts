@@ -19,7 +19,6 @@ function loadSavedLocale(
 export function useLocale(customLocales?: readonly LocaleOption[]) {
   const { locale, t } = useI18n();
 
-  // Use custom locales from project or fallback to lib's default
   const availableLocales = customLocales || defaultAvailableLocales;
 
   const currentLocale = computed({

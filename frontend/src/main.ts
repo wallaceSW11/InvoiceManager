@@ -10,17 +10,15 @@ import { setupLib } from "@lib";
 const app = createApp(App)
 const pinia = createPinia()
 
-app.use(pinia) // Pinia MUST come before setupLib
-setupLib(app) // Registers components and global plugins
+app.use(pinia)
+setupLib(app)
 app.use(router)
 app.use(vuetify)
 app.use(i18n)
 
-// Aguarda o router estar pronto antes de montar o app
 router.isReady().then(() => {
   app.mount('#app')
 })
 
-// Register service worker
 registerSW({ immediate: true })
 
