@@ -6,21 +6,21 @@ Big.RM = Big.roundHalfUp
 export class MoneyCalculator {
   static add(...values: number[]): number {
     return values.reduce((sum, val) => {
-      return new Big(sum).plus(val).toNumber()
+      return new Big(sum).plus(val).round(2).toNumber()
     }, 0)
   }
 
   static subtract(minuend: number, subtrahend: number): number {
-    return new Big(minuend).minus(subtrahend).toNumber()
+    return new Big(minuend).minus(subtrahend).round(2).toNumber()
   }
 
   static multiply(value: number, multiplier: number): number {
-    return new Big(value).times(multiplier).toNumber()
+    return new Big(value).times(multiplier).round(2).toNumber()
   }
 
   static divide(dividend: number, divisor: number): number {
     if (divisor === 0) throw new Error('Division by zero')
-    return new Big(dividend).div(divisor).toNumber()
+    return new Big(dividend).div(divisor).round(2).toNumber()
   }
 
   static round(value: number): number {

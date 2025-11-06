@@ -33,7 +33,7 @@ export class CSVParser {
       }
     })
 
-    const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0)
+    const totalAmount = Number(transactions.reduce((sum, t) => sum + t.amount, 0).toFixed(2))
 
     return {
       success: errors.length === 0,
@@ -97,7 +97,7 @@ export class CSVParser {
       throw new Error(`Invalid amount: ${amountStr}`)
     }
 
-    return amount
+    return Number(amount.toFixed(2))
   }
 
   validateFile(file: File): { valid: boolean; error?: string } {
