@@ -105,7 +105,6 @@ function updateSplitValue(transactionId: string, participantId: string, value: n
   }
   
   transactionSplits.value[transactionId][participantId] = value
-  // Marca como manual quando o usuário digita diretamente
   manualValues.value[transactionId][participantId] = true
 }
 
@@ -116,7 +115,6 @@ function isManualValue(transactionId: string, participantId: string): boolean {
 function autoSplitTransaction(transaction: Transaction) {
   if (participants.value.length === 0) return
 
-  // Pega participantes sem valor (zerados) e que não são manuais
   const participantsWithoutValue = participants.value.filter(p => {
     const value = getSplitValue(transaction.id, p.id)
     const isManual = isManualValue(transaction.id, p.id)
@@ -125,13 +123,11 @@ function autoSplitTransaction(transaction: Transaction) {
   
   if (participantsWithoutValue.length === 0) return
 
-  // Calcula o valor restante (total - soma dos valores já atribuídos)
   const currentTotal = getTransactionTotal(transaction)
   const remaining = MoneyCalculator.subtract(transaction.amount, currentTotal)
   
   if (remaining === 0) return
 
-  // Divide o restante entre os participantes sem valor
   if (!transactionSplits.value[transaction.id]) {
     transactionSplits.value[transaction.id] = {}
   }
@@ -145,7 +141,7 @@ function autoSplitTransaction(transaction: Transaction) {
     const splitValues = MoneyCalculator.splitEqually(remaining, participantsWithoutValue.length)
     participantsWithoutValue.forEach((participant, index) => {
       splits[participant.id] = splitValues[index] || 0
-      manuals[participant.id] = false // Marca como automático
+      manuals[participant.id] = false
     })
   }
 }
@@ -156,7 +152,6 @@ function removeAllSplits(transaction: Transaction) {
   const splits = transactionSplits.value[transaction.id]
   const manuals = manualValues.value[transaction.id]
   
-  // Remove apenas valores automáticos, preserva os manuais
   participants.value.forEach(participant => {
     if (!isManualValue(transaction.id, participant.id)) {
       if (splits) {
@@ -172,7 +167,6 @@ function removeAllSplits(transaction: Transaction) {
 function canDivideAll(transaction: Transaction): boolean {
   if (participants.value.length === 0) return false
   
-  // Pode dividir se houver pelo menos um participante sem valor e não manual
   return participants.value.some(p => {
     const value = getSplitValue(transaction.id, p.id)
     const isManual = isManualValue(transaction.id, p.id)
@@ -183,7 +177,6 @@ function canDivideAll(transaction: Transaction): boolean {
 function canRemoveAll(transaction: Transaction): boolean {
   if (!transactionSplits.value[transaction.id]) return false
   
-  // Pode remover se houver pelo menos um valor automático (não manual) diferente de zero
   return participants.value.some(p => {
     const value = getSplitValue(transaction.id, p.id)
     const isManual = isManualValue(transaction.id, p.id)
@@ -195,7 +188,6 @@ function toggleParticipantSplit(transaction: Transaction, participant: Participa
   const currentValue = getSplitValue(transaction.id, participant.id)
   
   if (currentValue !== 0) {
-    // Remove o valor (apenas se não for manual)
     if (!isManualValue(transaction.id, participant.id)) {
       updateSplitValueProgrammatically(transaction.id, participant.id, 0)
       const manuals = manualValues.value[transaction.id]
@@ -203,21 +195,16 @@ function toggleParticipantSplit(transaction: Transaction, participant: Participa
         delete manuals[participant.id]
       }
       
-      // Após remover, recalcula os automáticos restantes
       recalculateAutomaticSplits(transaction)
     }
   } else {
-    // Adiciona este participante aos automáticos e recalcula tudo
-    // Primeiro, marca como automático com valor temporário
-    updateSplitValueProgrammatically(transaction.id, participant.id, 1) // valor temporário apenas para marcar
+    updateSplitValueProgrammatically(transaction.id, participant.id, 1)
     
-    // Agora recalcula todos os automáticos
     recalculateAutomaticSplits(transaction)
   }
 }
 
 function recalculateAutomaticSplits(transaction: Transaction) {
-  // 1. Calcula o total de valores manuais
   let manualTotal = 0
   participants.value.forEach(p => {
     if (isManualValue(transaction.id, p.id)) {
@@ -225,12 +212,10 @@ function recalculateAutomaticSplits(transaction: Transaction) {
     }
   })
   
-  // 2. Calcula o restante (total da transação - valores manuais)
   const remaining = MoneyCalculator.subtract(transaction.amount, manualTotal)
   
   if (remaining === 0) return
   
-  // 3. Identifica participantes com valores automáticos (não manuais e != 0)
   const automaticParticipants = participants.value.filter(p => {
     const value = getSplitValue(transaction.id, p.id)
     const isManual = isManualValue(transaction.id, p.id)
@@ -239,10 +224,8 @@ function recalculateAutomaticSplits(transaction: Transaction) {
   
   if (automaticParticipants.length === 0) return
   
-  // 4. Divide o restante igualmente entre todos os participantes automáticos
   const splitValues = MoneyCalculator.splitEqually(remaining, automaticParticipants.length)
   
-  // 5. Atualiza cada participante automático
   automaticParticipants.forEach((p, index) => {
     updateSplitValueProgrammatically(transaction.id, p.id, splitValues[index] || 0)
   })
@@ -257,7 +240,6 @@ function updateSplitValueProgrammatically(transactionId: string, participantId: 
   }
   
   transactionSplits.value[transactionId][participantId] = value
-  // NÃO marca como manual - é uma atualização programática
   manualValues.value[transactionId][participantId] = false
 }
 
@@ -308,10 +290,10 @@ async function saveInvoice() {
       transactions: updatedTransactions
     })
     
-    notify('success', t('invoice.saved'), t('invoice.savedMessage'))
+    notify('success', t('invoice.saved'))
   } catch (error) {
     console.error('Error saving invoice:', error)
-    notify('error', t('common.error'), t('invoice.saveError'))
+    notify('error', t('invoice.saveError'))
   } finally {
     saving.value = false
   }
@@ -799,7 +781,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* Remove setas do input number */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;

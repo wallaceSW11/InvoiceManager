@@ -75,7 +75,6 @@ const router = useRouter()
 const themeStore = useThemeStore()
 const storageAvailable = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
-// Sincroniza o tema com o Vuetify automaticamente
 useThemeSync()
 
 const showImportDialog = ref(false)

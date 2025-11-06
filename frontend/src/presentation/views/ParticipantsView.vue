@@ -4,7 +4,7 @@
       <v-card-title class="d-flex justify-space-between align-center">
         <span>{{ t('participants.title') }}</span>
         <v-btn color="primary" prepend-icon="mdi-plus" @click="openDialog()">
-          {{ t('participants.add') }}
+          {{ t('common.add') }}
         </v-btn>
       </v-card-title>
 
@@ -134,7 +134,6 @@ function handlePhoneInput(event: Event) {
   
   form.value.phoneNumber = formatPhone(input.value)
   
-  // Ajusta a posição do cursor após a formatação
   const newLength = form.value.phoneNumber.length
   const diff = newLength - oldLength
   
@@ -153,8 +152,7 @@ async function saveParticipant() {
         ...form.value,
         phoneNumber: cleanPhone
       })
-      notify('success', t('common.success'), t('participants.messages.updated'))
-      // Em edição, fecha o modal
+      notify('success', t('participants.messages.updated'))
       dialog.value = false
       editingParticipant.value = null
     } else {
@@ -162,18 +160,16 @@ async function saveParticipant() {
         ...form.value,
         phoneNumber: cleanPhone
       })
-      notify('success', t('common.success'), t('participants.messages.created'))
-      // Em novo cadastro, mantém o modal aberto e limpa os campos
+      notify('success', t('participants.messages.created'))
       form.value = { name: '', phoneNumber: '' }
       formRef.value?.resetValidation()
-      // Retorna o foco para o primeiro campo
       nextTick(() => {
         nameFieldRef.value?.focus()
       })
     }
   } catch (error) {
     console.error('Error saving participant:', error)
-    notify('error', t('common.error'), t('participants.messages.error'))
+    notify('error', t('participants.messages.error'))
   }
 }
 
@@ -181,10 +177,10 @@ async function confirmDelete(participant: Participant) {
   if (confirm(t('participants.deleteConfirm', { name: participant.name }))) {
     try {
       await participantStore.deleteParticipant(participant.id)
-      notify('success', t('common.success'), t('participants.messages.deleted'))
+      notify('success', t('participants.messages.deleted'))
     } catch (error) {
       console.error('Error deleting participant:', error)
-      notify('error', t('common.error'), t('participants.messages.error'))
+      notify('error', t('participants.messages.error'))
     }
   }
 }

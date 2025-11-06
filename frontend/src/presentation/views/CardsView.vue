@@ -4,7 +4,7 @@
       <v-card-title class="d-flex justify-space-between align-center">
         <span>{{ t('cards.title') }}</span>
         <v-btn color="primary" prepend-icon="mdi-plus" @click="openDialog()">
-          {{ t('cards.add') }}
+          {{ t('common.add') }}
         </v-btn>
       </v-card-title>
 
@@ -129,24 +129,21 @@ async function saveCard() {
   try {
     if (editingCard.value) {
       await cardStore.updateCard(editingCard.value.id, form.value)
-      notify('success', t('common.success'), t('cards.messages.updated'))
-      // Em edição, fecha o modal
+      notify('success', t('cards.messages.updated'))
       dialog.value = false
       editingCard.value = null
     } else {
       await cardStore.createCard(form.value)
-      notify('success', t('common.success'), t('cards.messages.created'))
-      // Em novo cadastro, mantém o modal aberto e limpa os campos
+      notify('success', t('cards.messages.created'))
       form.value = { nickname: '', lastFourDigits: '' }
       formRef.value?.resetValidation()
-      // Retorna o foco para o primeiro campo
       nextTick(() => {
         nicknameFieldRef.value?.focus()
       })
     }
   } catch (error) {
     console.error('Error saving card:', error)
-    notify('error', t('common.error'), t('cards.messages.error'))
+    notify('error', t('cards.messages.error'))
   }
 }
 
@@ -154,10 +151,10 @@ async function confirmDelete(card: Card) {
   if (confirm(t('cards.deleteConfirm', { nickname: card.nickname }))) {
     try {
       await cardStore.deleteCard(card.id)
-      notify('success', t('common.success'), t('cards.messages.deleted'))
+      notify('success', t('cards.messages.deleted'))
     } catch (error) {
       console.error('Error deleting card:', error)
-      notify('error', t('common.error'), t('cards.messages.error'))
+      notify('error', t('cards.messages.error'))
     }
   }
 }

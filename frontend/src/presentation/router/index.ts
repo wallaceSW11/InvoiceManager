@@ -42,12 +42,8 @@ const router = createRouter({
   routes
 })
 
-// Navigation guard para atualizar o título da página
 router.beforeEach((_to, _from, next) => {
-  // Atualiza o título da página
   document.title = 'InvoiceManager'
-  
-  // Continua com a navegação
   next()
 })
 

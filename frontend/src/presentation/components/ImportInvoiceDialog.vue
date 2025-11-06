@@ -53,7 +53,6 @@ async function importInvoice() {
   error.value = null;
 
   try {
-    // Verifica se já existe uma fatura para o mesmo cartão e vencimento
     const selectedDate = new Date(dueDate.value);
     const existingInvoice = invoiceStore.invoices.find((invoice) => {
       const invoiceDueDate = new Date(invoice.dueDate);
@@ -103,10 +102,10 @@ async function importInvoice() {
           createdAt: now,
           updatedAt: now,
         }))
-        .sort((a, b) => a.date.getTime() - b.date.getTime()), // Ordena por data (mais antigo primeiro)
+        .sort((a, b) => a.date.getTime() - b.date.getTime()),
     });
 
-    notify("success", t("common.success"), t("invoice.import.messages.success"));
+    notify("success", t("invoice.import.messages.success"));
     emit("imported", newInvoice.id);
 
     setTimeout(() => {
@@ -114,7 +113,7 @@ async function importInvoice() {
     }, 100);
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err);
-    notify("error", t("common.error"), t("invoice.import.messages.error"));
+    notify("error", t("invoice.import.messages.error"));
     loading.value = false;
   }
 }

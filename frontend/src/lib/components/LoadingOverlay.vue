@@ -28,7 +28,6 @@ const show = (message?: string) => {
   currentMessage.value = message || t('common.loading')
   isVisible.value = true
 
-  // Show content after 300ms delay
   contentTimeoutId = setTimeout(() => {
     showContent.value = true
   }, 300)

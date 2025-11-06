@@ -51,10 +51,10 @@ export default {
       lastDigitsInvalid: 'Deve ter exatamente 4 dígitos'
     },
     messages: {
-      created: 'Cartão criado com sucesso',
-      updated: 'Cartão atualizado com sucesso',
-      deleted: 'Cartão excluído com sucesso',
-      error: 'Erro ao gerenciar cartão'
+      created: 'Cartão criado',
+      updated: 'Cartão atualizado',
+      deleted: 'Cartão excluído',
+      error: 'Falha ao gerenciar cartão'
     }
   },
   participants: {
@@ -75,10 +75,10 @@ export default {
       phoneInvalid: 'Telefone inválido'
     },
     messages: {
-      created: 'Participante criado com sucesso',
-      updated: 'Participante atualizado com sucesso',
-      deleted: 'Participante excluído com sucesso',
-      error: 'Erro ao gerenciar participante'
+      created: 'Participante criado',
+      updated: 'Participante atualizado',
+      deleted: 'Participante excluído',
+      error: 'Falha ao gerenciar participante'
     }
   },
   home: {
@@ -149,8 +149,8 @@ export default {
         button: 'Visualizar'
       },
       messages: {
-        success: 'Fatura importada com sucesso',
-        error: 'Erro ao importar fatura'
+        success: 'Fatura importada',
+        error: 'Falha ao importar fatura'
       }
     },
     card: 'Cartão',
@@ -190,12 +190,12 @@ export default {
       completed: 'Finalizada'
     },
     messages: {
-      deleted: 'Fatura excluída com sucesso',
-      error: 'Erro ao gerenciar fatura'
+      deleted: 'Fatura excluída',
+      error: 'Falha ao gerenciar fatura'
     },
     saved: 'Fatura salva',
-    savedMessage: 'A fatura foi salva com sucesso',
-    saveError: 'Erro ao salvar a fatura'
+    savedMessage: 'A fatura foi salva',
+    saveError: 'Falha ao salvar a fatura'
   },
   theme: {
     toggle: 'Alternar tema',

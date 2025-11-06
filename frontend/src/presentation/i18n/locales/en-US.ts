@@ -51,10 +51,10 @@ export default {
       lastDigitsInvalid: 'Must be exactly 4 digits'
     },
     messages: {
-      created: 'Card created successfully',
-      updated: 'Card updated successfully',
-      deleted: 'Card deleted successfully',
-      error: 'Error managing card'
+      created: 'Card created',
+      updated: 'Card updated',
+      deleted: 'Card deleted',
+      error: 'Failed to manage card'
     }
   },
   participants: {
@@ -75,10 +75,10 @@ export default {
       phoneInvalid: 'Invalid phone number'
     },
     messages: {
-      created: 'Participant created successfully',
-      updated: 'Participant updated successfully',
-      deleted: 'Participant deleted successfully',
-      error: 'Error managing participant'
+      created: 'Participant created',
+      updated: 'Participant updated',
+      deleted: 'Participant deleted',
+      error: 'Failed to manage participant'
     }
   },
   home: {
@@ -149,8 +149,8 @@ export default {
         button: 'Preview'
       },
       messages: {
-        success: 'Invoice imported successfully',
-        error: 'Error importing invoice'
+        success: 'Invoice imported',
+        error: 'Failed to import invoice'
       }
     },
     card: 'Card',
@@ -190,12 +190,12 @@ export default {
       completed: 'Completed'
     },
     messages: {
-      deleted: 'Invoice deleted successfully',
-      error: 'Error managing invoice'
+      deleted: 'Invoice deleted',
+      error: 'Failed to manage invoice'
     },
     saved: 'Invoice saved',
-    savedMessage: 'Invoice has been saved successfully',
-    saveError: 'Error saving invoice'
+    savedMessage: 'Invoice has been saved',
+    saveError: 'Failed to save invoice'
   },
   theme: {
     toggle: 'Toggle theme',

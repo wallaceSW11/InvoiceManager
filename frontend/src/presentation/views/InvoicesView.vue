@@ -134,10 +134,10 @@ async function confirmDelete(invoice: Invoice) {
   if (confirmed) {
     try {
       await invoiceStore.deleteInvoice(invoice.id)
-      notify('success', t('common.success'), t('invoice.messages.deleted'))
+      notify('success', t('invoice.messages.deleted'))
     } catch (error) {
       console.error('Failed to delete invoice:', error)
-      notify('error', t('common.error'), t('invoice.messages.error'))
+      notify('error', t('invoice.messages.error'))
     }
   }
 }
