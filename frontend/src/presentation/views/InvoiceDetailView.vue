@@ -104,7 +104,7 @@ function updateSplitValue(transactionId: string, participantId: string, value: n
     manualValues.value[transactionId] = {}
   }
   
-  transactionSplits.value[transactionId][participantId] = value
+  transactionSplits.value[transactionId][participantId] = Number(value.toFixed(2))
   manualValues.value[transactionId][participantId] = true
 }
 
@@ -239,7 +239,7 @@ function updateSplitValueProgrammatically(transactionId: string, participantId: 
     manualValues.value[transactionId] = {}
   }
   
-  transactionSplits.value[transactionId][participantId] = value
+  transactionSplits.value[transactionId][participantId] = Number(value.toFixed(2))
   manualValues.value[transactionId][participantId] = false
 }
 

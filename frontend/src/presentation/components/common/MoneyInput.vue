@@ -63,7 +63,8 @@ function parseMoneyInput(input: string): number {
   if (!numbers) return 0
   
   const value = parseInt(numbers) / 100
-  return isNegative ? -value : value
+  const rounded = Number((isNegative ? -value : value).toFixed(2))
+  return rounded
 }
 
 function handleInput(value: string) {

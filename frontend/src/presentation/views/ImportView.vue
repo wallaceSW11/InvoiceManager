@@ -249,28 +249,40 @@ async function importInvoices() {
       if (exists) {
         const invoiceData = {
           ...invoice,
+          totalAmount: Number(invoice.totalAmount.toFixed(2)),
           dueDate: new Date(invoice.dueDate),
           createdAt: new Date(invoice.createdAt),
           updatedAt: new Date(invoice.updatedAt),
           transactions: invoice.transactions.map(t => ({
             ...t,
+            amount: Number(t.amount.toFixed(2)),
             date: new Date(t.date),
             createdAt: new Date(t.createdAt),
-            updatedAt: new Date(t.updatedAt)
+            updatedAt: new Date(t.updatedAt),
+            splits: t.splits.map(s => ({
+              ...s,
+              amount: Number(s.amount.toFixed(2))
+            }))
           }))
         }
         await invoiceStore.updateInvoice(invoice.id, invoiceData)
       } else {
         const invoiceData = {
           ...invoice,
+          totalAmount: Number(invoice.totalAmount.toFixed(2)),
           dueDate: new Date(invoice.dueDate),
           createdAt: new Date(invoice.createdAt),
           updatedAt: new Date(invoice.updatedAt),
           transactions: invoice.transactions.map(t => ({
             ...t,
+            amount: Number(t.amount.toFixed(2)),
             date: new Date(t.date),
             createdAt: new Date(t.createdAt),
-            updatedAt: new Date(t.updatedAt)
+            updatedAt: new Date(t.updatedAt),
+            splits: t.splits.map(s => ({
+              ...s,
+              amount: Number(s.amount.toFixed(2))
+            }))
           }))
         }
         await invoiceStore.createInvoice(invoiceData)

@@ -90,7 +90,7 @@ export class LocalStorageInvoiceRepository
   }
 
   async create(dto: CreateInvoiceDTO): Promise<Invoice> {
-    const totalAmount = dto.transactions.reduce((sum, t) => sum + t.amount, 0)
+    const totalAmount = Number(dto.transactions.reduce((sum, t) => sum + t.amount, 0).toFixed(2))
     return super.create({
       ...dto,
       totalAmount,
@@ -100,7 +100,7 @@ export class LocalStorageInvoiceRepository
 
   async update(id: string, dto: UpdateInvoiceDTO): Promise<Invoice> {
     if (dto.transactions) {
-      const totalAmount = dto.transactions.reduce((sum, t) => sum + t.amount, 0)
+      const totalAmount = Number(dto.transactions.reduce((sum, t) => sum + t.amount, 0).toFixed(2))
       return super.update(id, { ...dto, totalAmount })
     }
     return super.update(id, dto)
