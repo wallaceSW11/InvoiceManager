@@ -509,7 +509,6 @@ onMounted(async () => {
               color="success"
               prepend-icon="mdi-whatsapp"
               @click="generateWhatsAppMessages"
-              :disabled="!areAllTransactionsValid()"
               size="small"
             >
               WhatsApp
