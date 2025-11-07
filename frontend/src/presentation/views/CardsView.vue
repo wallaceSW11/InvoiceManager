@@ -84,7 +84,7 @@ import { useGlobals } from '@lib'
 
 const { t } = useI18n()
 const cardStore = useCardStore()
-const { notify } = useGlobals()
+const { notify, confirm } = useGlobals()
 
 const headers = computed(() => [
   { title: t('cards.nickname'), key: 'nickname' },
@@ -148,7 +148,12 @@ async function saveCard() {
 }
 
 async function confirmDelete(card: Card) {
-  if (confirm(t('cards.deleteConfirm', { nickname: card.nickname }))) {
+  const confirmed = await confirm(
+    t('cards.deleteConfirm', { nickname: card.nickname }),
+    t('common.confirmDelete')
+  )
+  
+  if (confirmed) {
     try {
       await cardStore.deleteCard(card.id)
       notify('success', t('cards.messages.deleted'))

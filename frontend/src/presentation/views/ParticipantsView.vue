@@ -88,7 +88,7 @@ import { useGlobals } from '@lib'
 const { t } = useI18n()
 const participantStore = useParticipantStore()
 const { formatPhone, unformatPhone, validatePhone } = usePhoneMask()
-const { notify } = useGlobals()
+const { notify, confirm } = useGlobals()
 
 const headers = computed(() => [
   { title: t('participants.name'), key: 'name' },
@@ -174,7 +174,12 @@ async function saveParticipant() {
 }
 
 async function confirmDelete(participant: Participant) {
-  if (confirm(t('participants.deleteConfirm', { name: participant.name }))) {
+  const confirmed = await confirm(
+    t('participants.deleteConfirm', { name: participant.name }),
+    t('common.confirmDelete')
+  )
+  
+  if (confirmed) {
     try {
       await participantStore.deleteParticipant(participant.id)
       notify('success', t('participants.messages.deleted'))

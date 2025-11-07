@@ -184,14 +184,38 @@ async function importCards() {
   try {
     const data = await readJSONFile<Card>(file)
     
+    // Busca os cartões existentes
+    await cardStore.fetchCards()
+    
     for (const card of data) {
       const exists = cardStore.cards.some(c => c.id === card.id)
       if (exists) {
-        await cardStore.updateCard(card.id, card)
+        // Se já existe, atualiza
+        await cardStore.updateCard(card.id, {
+          nickname: card.nickname,
+          lastFourDigits: card.lastFourDigits
+        })
       } else {
-        await cardStore.createCard(card)
+        // Se não existe, cria diretamente no localStorage preservando o ID
+        const cards = cardStore.cards
+        const cardWithDates = {
+          ...card,
+          createdAt: new Date(card.createdAt),
+          updatedAt: new Date(card.updatedAt)
+        }
+        cards.push(cardWithDates)
+        localStorage.setItem('invoicemanager:cards', JSON.stringify(cards.map(c => ({
+          id: c.id,
+          nickname: c.nickname,
+          lastFourDigits: c.lastFourDigits,
+          createdAt: c.createdAt.toISOString(),
+          updatedAt: c.updatedAt.toISOString()
+        }))))
       }
     }
+    
+    // Recarrega para garantir sincronização
+    await cardStore.fetchCards()
 
     const time = formatImportTime()
     notify('success', getSuccessMessage('cards', data.length))
@@ -214,14 +238,38 @@ async function importParticipants() {
   try {
     const data = await readJSONFile<Participant>(file)
     
+    // Busca os participantes existentes
+    await participantStore.fetchParticipants()
+    
     for (const participant of data) {
       const exists = participantStore.participants.some(p => p.id === participant.id)
       if (exists) {
-        await participantStore.updateParticipant(participant.id, participant)
+        // Se já existe, atualiza
+        await participantStore.updateParticipant(participant.id, {
+          name: participant.name,
+          phoneNumber: participant.phoneNumber
+        })
       } else {
-        await participantStore.createParticipant(participant)
+        // Se não existe, cria diretamente no localStorage preservando o ID
+        const participants = participantStore.participants
+        const participantWithDates = {
+          ...participant,
+          createdAt: new Date(participant.createdAt),
+          updatedAt: new Date(participant.updatedAt)
+        }
+        participants.push(participantWithDates)
+        localStorage.setItem('invoicemanager:participants', JSON.stringify(participants.map(p => ({
+          id: p.id,
+          name: p.name,
+          phoneNumber: p.phoneNumber,
+          createdAt: p.createdAt.toISOString(),
+          updatedAt: p.updatedAt.toISOString()
+        }))))
       }
     }
+    
+    // Recarrega para garantir sincronização
+    await participantStore.fetchParticipants()
 
     const time = formatImportTime()
     notify('success', getSuccessMessage('participants', data.length))
@@ -244,50 +292,66 @@ async function importInvoices() {
   try {
     const data = await readJSONFile<Invoice>(file)
     
+    // Busca as faturas existentes
+    await invoiceStore.fetchInvoices()
+    
     for (const invoice of data) {
       const exists = invoiceStore.invoices.some(i => i.id === invoice.id)
-      if (exists) {
-        const invoiceData = {
-          ...invoice,
-          totalAmount: Number(invoice.totalAmount.toFixed(2)),
-          dueDate: new Date(invoice.dueDate),
-          createdAt: new Date(invoice.createdAt),
-          updatedAt: new Date(invoice.updatedAt),
-          transactions: invoice.transactions.map(t => ({
-            ...t,
-            amount: Number(t.amount.toFixed(2)),
-            date: new Date(t.date),
-            createdAt: new Date(t.createdAt),
-            updatedAt: new Date(t.updatedAt),
-            splits: t.splits.map(s => ({
-              ...s,
-              amount: Number(s.amount.toFixed(2))
-            }))
+      
+      // Prepara os dados da fatura com as datas convertidas
+      const invoiceData = {
+        ...invoice,
+        totalAmount: Number(invoice.totalAmount.toFixed(2)),
+        dueDate: new Date(invoice.dueDate),
+        createdAt: new Date(invoice.createdAt),
+        updatedAt: new Date(invoice.updatedAt),
+        transactions: invoice.transactions.map(t => ({
+          ...t,
+          amount: Number(t.amount.toFixed(2)),
+          date: new Date(t.date),
+          createdAt: new Date(t.createdAt),
+          updatedAt: new Date(t.updatedAt),
+          splits: t.splits.map(s => ({
+            ...s,
+            amount: Number(s.amount.toFixed(2))
           }))
-        }
+        }))
+      }
+      
+      if (exists) {
+        // Se já existe, atualiza
         await invoiceStore.updateInvoice(invoice.id, invoiceData)
       } else {
-        const invoiceData = {
-          ...invoice,
-          totalAmount: Number(invoice.totalAmount.toFixed(2)),
-          dueDate: new Date(invoice.dueDate),
-          createdAt: new Date(invoice.createdAt),
-          updatedAt: new Date(invoice.updatedAt),
-          transactions: invoice.transactions.map(t => ({
-            ...t,
-            amount: Number(t.amount.toFixed(2)),
-            date: new Date(t.date),
-            createdAt: new Date(t.createdAt),
-            updatedAt: new Date(t.updatedAt),
+        // Se não existe, cria diretamente no localStorage preservando o ID
+        const invoices = invoiceStore.invoices
+        invoices.push(invoiceData)
+        localStorage.setItem('invoicemanager:invoices', JSON.stringify(invoices.map(inv => ({
+          id: inv.id,
+          cardId: inv.cardId,
+          dueDate: inv.dueDate.toISOString(),
+          totalAmount: inv.totalAmount,
+          status: inv.status,
+          createdAt: inv.createdAt.toISOString(),
+          updatedAt: inv.updatedAt.toISOString(),
+          transactions: inv.transactions.map(t => ({
+            id: t.id,
+            description: t.description,
+            amount: t.amount,
+            date: t.date.toISOString(),
+            createdAt: t.createdAt.toISOString(),
+            updatedAt: t.updatedAt.toISOString(),
             splits: t.splits.map(s => ({
-              ...s,
-              amount: Number(s.amount.toFixed(2))
+              participantId: s.participantId,
+              amount: s.amount,
+              mode: s.mode
             }))
           }))
-        }
-        await invoiceStore.createInvoice(invoiceData)
+        }))))
       }
     }
+    
+    // Recarrega para garantir sincronização
+    await invoiceStore.fetchInvoices()
 
     const time = formatImportTime()
     notify('success', getSuccessMessage('invoices', data.length))

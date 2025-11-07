@@ -75,6 +75,17 @@ const grandTotal = computed(() => {
   return MoneyCalculator.add(...amounts)
 })
 
+const totalDifference = computed(() => {
+  if (!invoice.value) return 0
+  
+  const allSplitsTotal = Object.values(totalsByParticipant.value).reduce(
+    (acc, val) => MoneyCalculator.add(acc, val),
+    0
+  )
+  
+  return MoneyCalculator.subtract(grandTotal.value, allSplitsTotal)
+})
+
 function initializeTransactionSplits() {
   if (!invoice.value) return
 
@@ -301,7 +312,7 @@ async function saveInvoice() {
 
 async function saveAndClose() {
   await saveInvoice()
-  await navigateTo(router, '/')
+  await navigateTo(router, '/invoices')
 }
 
 async function completeInvoice() {
@@ -687,7 +698,9 @@ onMounted(async () => {
               <td class="text-right font-weight-bold text-h6" style="min-width: 120px">
                 {{ grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
               </td>
-              <td class="text-right" style="min-width: 120px"></td>
+              <td class="text-right font-weight-bold text-h6" style="min-width: 120px" :class="totalDifference === 0 ? 'text-success' : 'text-error'">
+                {{ totalDifference.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+              </td>
               <td class="text-center" style="width: 60px"></td>
               <td
                 v-for="participant in participants"
