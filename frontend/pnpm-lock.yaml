@@ -11,6 +11,9 @@ importers:
       '@mdi/font':
         specifier: ^7.4.47
         version: 7.4.47
+      '@wallacesw11/base-lib':
+        specifier: github:wallacesw11/BaseLib#main
+        version: https://codeload.github.com/wallacesw11/BaseLib/tar.gz/74551b14ecdba5ea1fe850ccf50339d31cbef507(axios@1.13.1)(pinia@3.0.3(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3)))(vue-i18n@11.1.12(vue@3.5.22(typescript@5.9.3)))(vue@3.5.22(typescript@5.9.3))(vuetify@3.10.8)
       axios:
         specifier: ^1.13.1
         version: 1.13.1
@@ -1023,6 +1026,16 @@ packages:
     resolution: {integrity: sha512-jSZTzTYaoiv8iwonFCVZQ0YYX/M+Uyl4ng+C4egMJT0Hcmh9gIxJL89qfZICDeo3g0IhqrvipW2FFKKRDMtVcA==}
     peerDependencies:
       vue: ^3.0.0
+      vuetify: ^3.0.0
+
+  '@wallacesw11/base-lib@https://codeload.github.com/wallacesw11/BaseLib/tar.gz/74551b14ecdba5ea1fe850ccf50339d31cbef507':
+    resolution: {tarball: https://codeload.github.com/wallacesw11/BaseLib/tar.gz/74551b14ecdba5ea1fe850ccf50339d31cbef507}
+    version: 1.0.1
+    peerDependencies:
+      axios: ^1.0.0
+      pinia: ^3.0.0
+      vue: ^3.5.0
+      vue-i18n: ^11.0.0
       vuetify: ^3.0.0
 
   acorn@8.15.0:
@@ -3129,6 +3142,14 @@ snapshots:
     dependencies:
       upath: 2.0.1
       vue: 3.5.22(typescript@5.9.3)
+      vuetify: 3.10.8(typescript@5.9.3)(vite-plugin-vuetify@2.1.2)(vue@3.5.22(typescript@5.9.3))
+
+  '@wallacesw11/base-lib@https://codeload.github.com/wallacesw11/BaseLib/tar.gz/74551b14ecdba5ea1fe850ccf50339d31cbef507(axios@1.13.1)(pinia@3.0.3(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3)))(vue-i18n@11.1.12(vue@3.5.22(typescript@5.9.3)))(vue@3.5.22(typescript@5.9.3))(vuetify@3.10.8)':
+    dependencies:
+      axios: 1.13.1
+      pinia: 3.0.3(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3))
+      vue: 3.5.22(typescript@5.9.3)
+      vue-i18n: 11.1.12(vue@3.5.22(typescript@5.9.3))
       vuetify: 3.10.8(typescript@5.9.3)(vite-plugin-vuetify@2.1.2)(vue@3.5.22(typescript@5.9.3))
 
   acorn@8.15.0: {}

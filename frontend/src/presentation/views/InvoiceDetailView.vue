@@ -10,7 +10,7 @@ import { SplitMode, InvoiceStatus } from '@/core/domain/enums'
 import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities'
 import { MoneyCalculator } from '@/shared/utils/MoneyCalculator'
 import MoneyInput from '@/presentation/components/common/MoneyInput.vue'
-import { notify } from '@/lib/utils'
+import { notify } from '@wallacesw11/base-lib'
 
 
 const { t } = useI18n()
@@ -301,10 +301,10 @@ async function saveInvoice() {
       transactions: updatedTransactions
     })
     
-    notify('success', t('invoice.saved'))
+    notify.success(t('invoice.saved'))
   } catch (error) {
     console.error('Error saving invoice:', error)
-    notify('error', t('invoice.saveError'))
+    notify.error(t('invoice.saveError'))
   } finally {
     saving.value = false
   }

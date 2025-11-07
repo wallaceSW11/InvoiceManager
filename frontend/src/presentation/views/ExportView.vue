@@ -89,7 +89,7 @@ import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
-import { notify } from '@lib'
+import { notify } from '@wallacesw11/base-lib'
 
 const { t } = useI18n()
 const cardStore = useCardStore()
@@ -148,7 +148,7 @@ function exportData() {
     }
 
     if (exportedCount > 0) {
-      notify('success', t('export.success', { count: exportedCount }))
+      notify.success(t('export.success', { count: exportedCount }))
       
       selectedEntities.value = {
         cards: false,
@@ -158,7 +158,7 @@ function exportData() {
     }
   } catch (error) {
     console.error('Error exporting data:', error)
-    notify('error', t('export.error'))
+    notify.error(t('export.error'))
   }
 }
 </script>

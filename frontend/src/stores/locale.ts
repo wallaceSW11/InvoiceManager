@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { i18n } from "@/presentation/i18n";
-import { defaultLocale, type LocaleCode } from "@lib/locales";
+import { defaultLocale, type LocaleCode } from "@wallacesw11/base-lib";
 
 const LOCALE_STORAGE_KEY = "app-locale";
 
