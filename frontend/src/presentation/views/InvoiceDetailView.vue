@@ -21,15 +21,15 @@ const participantStore = useParticipantStore()
 const cardStore = useCardStore()
 
 const transactionSplits = ref<Record<string, Record<string, number>>>({})
-const manualValues = ref<Record<string, Record<string, boolean>>>({}) // Rastreia valores manuais
+const manualValues = ref<Record<string, Record<string, boolean>>>({})
 const saving = ref(false)
 const showWhatsAppDialog = ref(false)
 const generatedMessages = ref<Record<string, string>>({})
 const copiedParticipantId = ref<string | null>(null)
 const searchQuery = ref('')
-const editableTransactionAmounts = ref<Record<string, boolean>>({}) // Controla se o total está editável
-const tempTransactionAmounts = ref<Record<string, number>>({}) // Armazena valores temporários
-const transactionAmountInputRefs = ref<Record<string, any>>({}) // Refs para os inputs de valor
+const editableTransactionAmounts = ref<Record<string, boolean>>({})
+const tempTransactionAmounts = ref<Record<string, number>>({})
+const transactionAmountInputRefs = ref<Record<string, any>>({})
 const showDeleteConfirmDialog = ref(false)
 const transactionToDelete = ref<string | null>(null)
 const showAddTransactionDialog = ref(false)
@@ -294,18 +294,15 @@ function toggleEditTransactionAmount(transactionId: string) {
   const isEditable = editableTransactionAmounts.value[transactionId]
   
   if (!isEditable) {
-    // Habilita edição
     editableTransactionAmounts.value[transactionId] = true
     const transaction = invoice.value?.transactions.find(t => t.id === transactionId)
     if (transaction) {
       tempTransactionAmounts.value[transactionId] = transaction.amount
     }
     
-    // Aguarda o próximo tick para selecionar o texto
     setTimeout(() => {
       const inputRef = transactionAmountInputRefs.value[transactionId]
       if (inputRef) {
-        // Tenta encontrar o input de várias formas
         let input = inputRef.$el?.querySelector('input')
         
         if (!input && inputRef.$el) {
@@ -314,7 +311,6 @@ function toggleEditTransactionAmount(transactionId: string) {
         
         if (input) {
           input.focus()
-          // Usa setSelectionRange para garantir a seleção
           setTimeout(() => {
             if (input) {
               input.setSelectionRange(0, input.value.length)
@@ -324,7 +320,6 @@ function toggleEditTransactionAmount(transactionId: string) {
       }
     }, 100)
   } else {
-    // Desabilita edição sem salvar
     editableTransactionAmounts.value[transactionId] = false
     delete tempTransactionAmounts.value[transactionId]
   }
@@ -354,7 +349,6 @@ async function saveTransactionAmount(transactionId: string) {
   const transaction = invoice.value.transactions.find(t => t.id === transactionId)
   if (!transaction) return
   
-  // Limpa todos os splits do lançamento
   if (transactionSplits.value[transactionId]) {
     participants.value.forEach(participant => {
       if (transactionSplits.value[transactionId]) {
@@ -363,15 +357,11 @@ async function saveTransactionAmount(transactionId: string) {
     })
   }
   
-  // Limpa valores manuais
   if (manualValues.value[transactionId]) {
     manualValues.value[transactionId] = {}
   }
   
-  // Atualiza o amount da transaction
   transaction.amount = newAmount
-  
-  // Desabilita edição
   editableTransactionAmounts.value[transactionId] = false
   delete tempTransactionAmounts.value[transactionId]
   
@@ -406,20 +396,17 @@ async function deleteTransaction() {
   if (!invoice.value || !transactionToDelete.value) return
   
   const transactionId = transactionToDelete.value
-  
-  // Remove a transação do invoice
   const transactionIndex = invoice.value.transactions.findIndex(t => t.id === transactionId)
+  
   if (transactionIndex !== -1) {
     invoice.value.transactions.splice(transactionIndex, 1)
   }
   
-  // Remove os splits associados
   delete transactionSplits.value[transactionId]
   delete manualValues.value[transactionId]
   delete editableTransactionAmounts.value[transactionId]
   delete tempTransactionAmounts.value[transactionId]
   
-  // Fecha o diálogo
   showDeleteConfirmDialog.value = false
   transactionToDelete.value = null
   
@@ -457,7 +444,6 @@ async function addTransaction() {
     return
   }
   
-  // Gera um ID único para a nova transação
   const newId = `transaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   
   const transaction: Transaction = {
@@ -470,14 +456,10 @@ async function addTransaction() {
     updatedAt: new Date()
   }
   
-  // Adiciona a transação ao invoice
   invoice.value.transactions.push(transaction)
-  
-  // Inicializa os splits vazios para esta transação
   transactionSplits.value[newId] = {}
   manualValues.value[newId] = {}
   
-  // Fecha o modal e limpa os campos
   showAddTransactionDialog.value = false
   newTransaction.value = {
     date: new Date().toISOString().split('T')[0]!,
@@ -677,8 +659,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="invoice" style="display: flex; flex-direction: column; padding: 16px;">
-    <!-- Header Card -->
+  <div v-if="invoice" class="d-flex flex-column pa-4">
     <v-card class="mb-2">
       <v-card-text class="py-3">
         <v-row dense align="center">
@@ -760,7 +741,6 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <!-- Search Field -->
     <v-card class="mb-2">
       <v-card-text class="py-2">
         <v-text-field
@@ -774,7 +754,6 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <!-- Table Card -->
     <v-card class="mb-2">
       <v-card-text class="pa-0">
         <v-table density="compact" fixed-header height="calc(100dvh - 400px)">
@@ -985,7 +964,6 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <!-- Totals Card -->
     <v-card class="mt-2">
       <v-card-text class="pa-0">
         <v-table density="compact">
@@ -1018,7 +996,6 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <!-- WhatsApp Dialog -->
     <v-dialog v-model="showWhatsAppDialog" max-width="800">
       <v-card>
         <v-card-title class="d-flex justify-space-between align-center">
@@ -1086,7 +1063,6 @@ onMounted(async () => {
       </v-card>
     </v-dialog>
 
-    <!-- Add Transaction Dialog -->
     <v-dialog v-model="showAddTransactionDialog" max-width="500">
       <v-card>
         <v-card-title class="text-h6">
@@ -1140,7 +1116,6 @@ onMounted(async () => {
       </v-card>
     </v-dialog>
 
-    <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="showDeleteConfirmDialog" max-width="400">
       <v-card>
         <v-card-title class="text-h6">
