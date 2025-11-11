@@ -176,7 +176,14 @@ export default {
       difference: 'Difference',
       search: 'Search purchases',
       totals: 'Totals',
-      noParticipantsSelected: 'Select participants to start splitting values'
+      noParticipantsSelected: 'Select participants to start splitting values',
+      editAmount: 'Edit transaction amount',
+      saveAmount: 'Save amount',
+      invalidAmount: 'Invalid amount',
+      amountUpdated: 'Transaction amount updated. Participant values have been cleared.',
+      deleteTransaction: 'Delete transaction',
+      confirmDelete: 'Are you sure you want to delete this transaction?',
+      confirmDeleteMessage: 'This action cannot be undone.'
     },
     whatsapp: {
       title: 'WhatsApp Messages',
@@ -197,7 +204,10 @@ export default {
     },
     saved: 'Invoice saved',
     savedMessage: 'Invoice has been saved',
-    saveError: 'Failed to save invoice'
+    saveError: 'Failed to save invoice',
+    transactionDeleted: 'Transaction deleted',
+    addTransaction: 'Add Transaction',
+    transactionAdded: 'Transaction added'
   },
   export: {
     title: 'Export Data',

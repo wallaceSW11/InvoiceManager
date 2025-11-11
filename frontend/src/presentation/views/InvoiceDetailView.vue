@@ -27,6 +27,21 @@ const showWhatsAppDialog = ref(false)
 const generatedMessages = ref<Record<string, string>>({})
 const copiedParticipantId = ref<string | null>(null)
 const searchQuery = ref('')
+const editableTransactionAmounts = ref<Record<string, boolean>>({}) // Controla se o total está editável
+const tempTransactionAmounts = ref<Record<string, number>>({}) // Armazena valores temporários
+const transactionAmountInputRefs = ref<Record<string, any>>({}) // Refs para os inputs de valor
+const showDeleteConfirmDialog = ref(false)
+const transactionToDelete = ref<string | null>(null)
+const showAddTransactionDialog = ref(false)
+const newTransaction = ref<{
+  date: string
+  description: string
+  amount: number
+}>({
+  date: new Date().toISOString().split('T')[0]!,
+  description: '',
+  amount: 0
+})
 
 const invoice = computed(() => invoiceStore.currentInvoice)
 const participants = computed(() => participantStore.participants)
@@ -273,6 +288,204 @@ function isTransactionValid(transaction: Transaction): boolean {
 function areAllTransactionsValid(): boolean {
   if (!invoice.value) return false
   return invoice.value.transactions.every(t => isTransactionValid(t))
+}
+
+function toggleEditTransactionAmount(transactionId: string) {
+  const isEditable = editableTransactionAmounts.value[transactionId]
+  
+  if (!isEditable) {
+    // Habilita edição
+    editableTransactionAmounts.value[transactionId] = true
+    const transaction = invoice.value?.transactions.find(t => t.id === transactionId)
+    if (transaction) {
+      tempTransactionAmounts.value[transactionId] = transaction.amount
+    }
+    
+    // Aguarda o próximo tick para selecionar o texto
+    setTimeout(() => {
+      const inputRef = transactionAmountInputRefs.value[transactionId]
+      if (inputRef) {
+        // Tenta encontrar o input de várias formas
+        let input = inputRef.$el?.querySelector('input')
+        
+        if (!input && inputRef.$el) {
+          input = inputRef.$el.tagName === 'INPUT' ? inputRef.$el : null
+        }
+        
+        if (input) {
+          input.focus()
+          // Usa setSelectionRange para garantir a seleção
+          setTimeout(() => {
+            if (input) {
+              input.setSelectionRange(0, input.value.length)
+            }
+          }, 50)
+        }
+      }
+    }, 100)
+  } else {
+    // Desabilita edição sem salvar
+    editableTransactionAmounts.value[transactionId] = false
+    delete tempTransactionAmounts.value[transactionId]
+  }
+}
+
+function getTransactionAmount(transactionId: string): number {
+  if (editableTransactionAmounts.value[transactionId]) {
+    return tempTransactionAmounts.value[transactionId] || 0
+  }
+  const transaction = invoice.value?.transactions.find(t => t.id === transactionId)
+  return transaction?.amount || 0
+}
+
+function updateTransactionAmount(transactionId: string, newAmount: number) {
+  tempTransactionAmounts.value[transactionId] = newAmount
+}
+
+async function saveTransactionAmount(transactionId: string) {
+  if (!invoice.value) return
+  
+  const newAmount = tempTransactionAmounts.value[transactionId]
+  if (newAmount === undefined || newAmount <= 0) {
+    notify.error(t('invoice.split.invalidAmount'))
+    return
+  }
+  
+  const transaction = invoice.value.transactions.find(t => t.id === transactionId)
+  if (!transaction) return
+  
+  // Limpa todos os splits do lançamento
+  if (transactionSplits.value[transactionId]) {
+    participants.value.forEach(participant => {
+      if (transactionSplits.value[transactionId]) {
+        transactionSplits.value[transactionId][participant.id] = 0
+      }
+    })
+  }
+  
+  // Limpa valores manuais
+  if (manualValues.value[transactionId]) {
+    manualValues.value[transactionId] = {}
+  }
+  
+  // Atualiza o amount da transaction
+  transaction.amount = newAmount
+  
+  // Desabilita edição
+  editableTransactionAmounts.value[transactionId] = false
+  delete tempTransactionAmounts.value[transactionId]
+  
+  notify.success(t('invoice.split.amountUpdated'))
+}
+
+function cancelEditTransactionAmount(transactionId: string) {
+  editableTransactionAmounts.value[transactionId] = false
+  delete tempTransactionAmounts.value[transactionId]
+}
+
+function isTransactionAmountEditable(transactionId: string): boolean {
+  return editableTransactionAmounts.value[transactionId] || false
+}
+
+function handleTransactionAmountKeydown(event: KeyboardEvent, transactionId: string) {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    saveTransactionAmount(transactionId)
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    cancelEditTransactionAmount(transactionId)
+  }
+}
+
+function confirmDeleteTransaction(transactionId: string) {
+  transactionToDelete.value = transactionId
+  showDeleteConfirmDialog.value = true
+}
+
+async function deleteTransaction() {
+  if (!invoice.value || !transactionToDelete.value) return
+  
+  const transactionId = transactionToDelete.value
+  
+  // Remove a transação do invoice
+  const transactionIndex = invoice.value.transactions.findIndex(t => t.id === transactionId)
+  if (transactionIndex !== -1) {
+    invoice.value.transactions.splice(transactionIndex, 1)
+  }
+  
+  // Remove os splits associados
+  delete transactionSplits.value[transactionId]
+  delete manualValues.value[transactionId]
+  delete editableTransactionAmounts.value[transactionId]
+  delete tempTransactionAmounts.value[transactionId]
+  
+  // Fecha o diálogo
+  showDeleteConfirmDialog.value = false
+  transactionToDelete.value = null
+  
+  notify.success(t('invoice.transactionDeleted'))
+}
+
+function cancelDeleteTransaction() {
+  showDeleteConfirmDialog.value = false
+  transactionToDelete.value = null
+}
+
+function openAddTransactionDialog() {
+  newTransaction.value = {
+    date: new Date().toISOString().split('T')[0]!,
+    description: '',
+    amount: 0
+  }
+  showAddTransactionDialog.value = true
+}
+
+function cancelAddTransaction() {
+  showAddTransactionDialog.value = false
+  newTransaction.value = {
+    date: new Date().toISOString().split('T')[0]!,
+    description: '',
+    amount: 0
+  }
+}
+
+async function addTransaction() {
+  if (!invoice.value) return
+  
+  if (!newTransaction.value.description.trim()) {
+    notify.error(t('invoice.description') + ' é obrigatória')
+    return
+  }
+  
+  // Gera um ID único para a nova transação
+  const newId = `transaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  
+  const transaction: Transaction = {
+    id: newId,
+    date: new Date(newTransaction.value.date),
+    description: newTransaction.value.description,
+    amount: newTransaction.value.amount,
+    splits: [],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+  
+  // Adiciona a transação ao invoice
+  invoice.value.transactions.push(transaction)
+  
+  // Inicializa os splits vazios para esta transação
+  transactionSplits.value[newId] = {}
+  manualValues.value[newId] = {}
+  
+  // Fecha o modal e limpa os campos
+  showAddTransactionDialog.value = false
+  newTransaction.value = {
+    date: new Date().toISOString().split('T')[0]!,
+    description: '',
+    amount: 0
+  }
+  
+  notify.success(t('invoice.transactionAdded'))
 }
 
 async function saveInvoice() {
@@ -567,6 +780,22 @@ onMounted(async () => {
         <v-table density="compact" fixed-header height="calc(100dvh - 400px)">
             <thead>
               <tr>
+                <th class="text-center" style="width: 50px">
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-plus"
+                        size="x-small"
+                        variant="text"
+                        color="success"
+                        :disabled="isCompleted"
+                        @click="openAddTransactionDialog"
+                      />
+                    </template>
+                    <span>{{ t('invoice.addTransaction') }}</span>
+                  </v-tooltip>
+                </th>
                 <th class="text-left" style="min-width: 100px">{{ t('invoice.date') }}</th>
                 <th class="text-left" style="min-width: 200px">{{ t('invoice.description') }}</th>
                 <th class="text-right" style="min-width: 120px">{{ t('invoice.total') }}</th>
@@ -588,6 +817,22 @@ onMounted(async () => {
                 :key="transaction.id"
                 :class="{ 'bg-error-lighten-4': !isTransactionValid(transaction) }"
               >
+                <td class="text-center">
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-close"
+                        size="x-small"
+                        variant="text"
+                        color="error"
+                        :disabled="isCompleted"
+                        @click="confirmDeleteTransaction(transaction.id)"
+                      />
+                    </template>
+                    <span>{{ t('invoice.split.deleteTransaction') }}</span>
+                  </v-tooltip>
+                </td>
                 <td class="text-no-wrap">{{ new Date(transaction.date).toLocaleDateString('pt-BR') }}</td>
                 <td class="text-truncate" style="max-width: 200px">
                   <v-tooltip location="top">
@@ -598,7 +843,60 @@ onMounted(async () => {
                   </v-tooltip>
                 </td>
                 <td class="text-right font-weight-bold text-no-wrap">
-                  {{ transaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+                  <div v-if="!isTransactionAmountEditable(transaction.id)" class="d-flex align-center justify-end gap-1">
+                    <span>{{ transaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}</span>
+                    <v-tooltip location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-pencil"
+                          size="x-small"
+                          variant="text"
+                          :disabled="isCompleted"
+                          @click="toggleEditTransactionAmount(transaction.id)"
+                        />
+                      </template>
+                      <span>{{ t('invoice.split.editAmount') }}</span>
+                    </v-tooltip>
+                  </div>
+                  <div v-else class="d-flex align-center justify-end gap-1">
+                    <MoneyInput
+                      :ref="(el) => transactionAmountInputRefs[transaction.id] = el"
+                      :model-value="getTransactionAmount(transaction.id)"
+                      @update:model-value="(val) => updateTransactionAmount(transaction.id, val)"
+                      @keydown="(e: KeyboardEvent) => handleTransactionAmountKeydown(e, transaction.id)"
+                      density="compact"
+                      hide-details
+                      variant="outlined"
+                      style="width: 130px;"
+                    />
+                    <v-tooltip location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-check"
+                          size="x-small"
+                          variant="text"
+                          color="success"
+                          @click="saveTransactionAmount(transaction.id)"
+                        />
+                      </template>
+                      <span>{{ t('invoice.split.saveAmount') }}</span>
+                    </v-tooltip>
+                    <v-tooltip location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-close"
+                          size="x-small"
+                          variant="text"
+                          color="error"
+                          @click="cancelEditTransactionAmount(transaction.id)"
+                        />
+                      </template>
+                      <span>{{ t('common.cancel') }}</span>
+                    </v-tooltip>
+                  </div>
                 </td>
                 <td class="text-right font-weight-bold text-no-wrap" :class="getTransactionDifference(transaction) === 0 ? 'text-success' : 'text-error'">
                   {{ getTransactionDifference(transaction).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
@@ -693,6 +991,7 @@ onMounted(async () => {
         <v-table density="compact">
           <tbody>
             <tr class="bg-grey-lighten-4">
+              <td class="text-center" style="width: 50px"></td>
               <td class="text-left font-weight-bold" style="min-width: 100px">{{ t('invoice.split.totals') }}</td>
               <td class="text-left" style="min-width: 200px"></td>
               <td class="text-right font-weight-bold text-h6" style="min-width: 120px">
@@ -782,6 +1081,87 @@ onMounted(async () => {
           <v-spacer />
           <v-btn @click="showWhatsAppDialog = false">
             {{ t('common.close') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Add Transaction Dialog -->
+    <v-dialog v-model="showAddTransactionDialog" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6">
+          {{ t('invoice.addTransaction') }}
+        </v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12">
+              <v-text-field
+                v-model="newTransaction.date"
+                :label="t('invoice.date')"
+                type="date"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="newTransaction.description"
+                :label="t('invoice.description')"
+                variant="outlined"
+                density="comfortable"
+                autofocus
+              />
+            </v-col>
+            <v-col cols="12">
+              <MoneyInput
+                v-model="newTransaction.amount"
+                :label="t('invoice.amount')"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            @click="cancelAddTransaction"
+          >
+            {{ t('common.cancel') }}
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            @click="addTransaction"
+          >
+            {{ t('common.add') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="showDeleteConfirmDialog" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6">
+          {{ t('invoice.split.confirmDelete') }}
+        </v-card-title>
+        <v-card-text>
+          {{ t('invoice.split.confirmDeleteMessage') }}
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            @click="cancelDeleteTransaction"
+          >
+            {{ t('common.no') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            @click="deleteTransaction"
+          >
+            {{ t('common.yes') }}
           </v-btn>
         </v-card-actions>
       </v-card>
