@@ -828,7 +828,7 @@ onMounted(async () => {
         <v-table
           density="compact"
           fixed-header
-          height="calc(100dvh - 400px)"
+          height="calc(100dvh - 320px)"
         >
           <thead>
             <tr>
