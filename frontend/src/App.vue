@@ -42,8 +42,8 @@
       <ThemeToggle />
     </v-app-bar>
 
-    <v-main>
-      <v-container fluid>
+    <v-main style="overflow: hidden;">
+      <v-container fluid style="height: 100%; overflow: hidden;">
         <router-view />
       </v-container>
     </v-main>
@@ -63,8 +63,18 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { navigateTo } from '@/presentation/router'
 import ImportInvoiceDialog from '@/presentation/components/ImportInvoiceDialog.vue'
-import { useNotifyStore, useLoadingStore, useConfirmStore, ThemeToggle, useThemeSync } from "@lib"
-import { useThemeStore } from '@lib/stores/theme'
+import { 
+  useNotifyStore, 
+  useLoadingStore, 
+  useConfirmStore,
+  ThemeToggle,
+  FloatingNotify,
+  LoadingOverlay,
+  ConfirmDialog,
+  LanguageSelector,
+  useThemeSync,
+  useThemeStore
+} from "@wallacesw11/base-lib"
 import logoUrl from '@/assets/logo.png?url'
 import { availableLocales as myCustomLocales } from '@/presentation/i18n'
 

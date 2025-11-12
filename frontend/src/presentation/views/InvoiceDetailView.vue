@@ -10,7 +10,9 @@ import { SplitMode, InvoiceStatus } from '@/core/domain/enums'
 import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities'
 import { MoneyCalculator } from '@/shared/utils/MoneyCalculator'
 import MoneyInput from '@/presentation/components/common/MoneyInput.vue'
-import { notify } from '@/lib/utils'
+import { notify, confirm, ModalBase } from '@wallacesw11/base-lib'
+import { useBreakpoint } from '@wallacesw11/base-lib/composables'
+import type { ModalAction } from '@wallacesw11/base-lib/components'
 
 
 const { t } = useI18n()
@@ -19,17 +21,52 @@ const router = useRouter()
 const invoiceStore = useInvoiceStore()
 const participantStore = useParticipantStore()
 const cardStore = useCardStore()
+const { isMobileOrTablet } = useBreakpoint()
 
 const transactionSplits = ref<Record<string, Record<string, number>>>({})
-const manualValues = ref<Record<string, Record<string, boolean>>>({}) // Rastreia valores manuais
+const manualValues = ref<Record<string, Record<string, boolean>>>({})
 const saving = ref(false)
 const showWhatsAppDialog = ref(false)
 const generatedMessages = ref<Record<string, string>>({})
 const copiedParticipantId = ref<string | null>(null)
 const searchQuery = ref('')
+const editableTransactionAmounts = ref<Record<string, boolean>>({})
+const tempTransactionAmounts = ref<Record<string, number>>({})
+const transactionAmountInputRefs = ref<Record<string, any>>({})
+const showAddTransactionDialog = ref(false)
+const newTransaction = ref<{
+  date: string
+  description: string
+  amount: number
+}>({
+  date: new Date().toISOString().split('T')[0]!,
+  description: '',
+  amount: 0
+})
 
 const invoice = computed(() => invoiceStore.currentInvoice)
 const participants = computed(() => participantStore.participants)
+
+const addTransactionActions = computed<ModalAction[]>(() => [
+  { 
+    text: t('common.cancel'), 
+    color: 'grey', 
+    handler: () => cancelAddTransaction() 
+  },
+  { 
+    text: t('common.add'), 
+    color: 'primary', 
+    handler: () => addTransaction() 
+  }
+])
+
+const whatsAppActions = computed<ModalAction[]>(() => [
+  { 
+    text: t('common.close'), 
+    color: 'grey', 
+    handler: () => closeWhatsAppDialog() 
+  }
+])
 const card = computed(() => {
   if (!invoice.value) return null
   return cardStore.getCardById(invoice.value.cardId)
@@ -275,6 +312,183 @@ function areAllTransactionsValid(): boolean {
   return invoice.value.transactions.every(t => isTransactionValid(t))
 }
 
+function toggleEditTransactionAmount(transactionId: string) {
+  const isEditable = editableTransactionAmounts.value[transactionId]
+  
+  if (!isEditable) {
+    editableTransactionAmounts.value[transactionId] = true
+    const transaction = invoice.value?.transactions.find(t => t.id === transactionId)
+    if (transaction) {
+      tempTransactionAmounts.value[transactionId] = transaction.amount
+    }
+    
+    setTimeout(() => {
+      const inputRef = transactionAmountInputRefs.value[transactionId]
+      if (inputRef) {
+        let input = inputRef.$el?.querySelector('input')
+        
+        if (!input && inputRef.$el) {
+          input = inputRef.$el.tagName === 'INPUT' ? inputRef.$el : null
+        }
+        
+        if (input) {
+          input.focus()
+          setTimeout(() => {
+            if (input) {
+              input.setSelectionRange(0, input.value.length)
+            }
+          }, 50)
+        }
+      }
+    }, 100)
+  } else {
+    editableTransactionAmounts.value[transactionId] = false
+    delete tempTransactionAmounts.value[transactionId]
+  }
+}
+
+function getTransactionAmount(transactionId: string): number {
+  if (editableTransactionAmounts.value[transactionId]) {
+    return tempTransactionAmounts.value[transactionId] || 0
+  }
+  const transaction = invoice.value?.transactions.find(t => t.id === transactionId)
+  return transaction?.amount || 0
+}
+
+function updateTransactionAmount(transactionId: string, newAmount: number) {
+  tempTransactionAmounts.value[transactionId] = newAmount
+}
+
+async function saveTransactionAmount(transactionId: string) {
+  if (!invoice.value) return
+  
+  const newAmount = tempTransactionAmounts.value[transactionId]
+  if (newAmount === undefined || newAmount <= 0) {
+    notify.error(t('invoice.split.invalidAmount'))
+    return
+  }
+  
+  const transaction = invoice.value.transactions.find(t => t.id === transactionId)
+  if (!transaction) return
+  
+  if (transactionSplits.value[transactionId]) {
+    participants.value.forEach(participant => {
+      if (transactionSplits.value[transactionId]) {
+        transactionSplits.value[transactionId][participant.id] = 0
+      }
+    })
+  }
+  
+  if (manualValues.value[transactionId]) {
+    manualValues.value[transactionId] = {}
+  }
+  
+  transaction.amount = newAmount
+  editableTransactionAmounts.value[transactionId] = false
+  delete tempTransactionAmounts.value[transactionId]
+  
+  notify.success(t('invoice.split.amountUpdated'))
+}
+
+function cancelEditTransactionAmount(transactionId: string) {
+  editableTransactionAmounts.value[transactionId] = false
+  delete tempTransactionAmounts.value[transactionId]
+}
+
+function isTransactionAmountEditable(transactionId: string): boolean {
+  return editableTransactionAmounts.value[transactionId] || false
+}
+
+function handleTransactionAmountKeydown(event: KeyboardEvent, transactionId: string) {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    saveTransactionAmount(transactionId)
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    cancelEditTransactionAmount(transactionId)
+  }
+}
+
+async function confirmDeleteTransaction(transactionId: string) {
+  const confirmed = await confirm.show(
+    t('invoice.split.confirmDelete'),
+    t('invoice.split.confirmDeleteMessage')
+  )
+  
+  if (confirmed) {
+    deleteTransaction(transactionId)
+  }
+}
+
+function deleteTransaction(transactionId: string) {
+  if (!invoice.value) return
+  
+  const transactionIndex = invoice.value.transactions.findIndex(t => t.id === transactionId)
+  
+  if (transactionIndex !== -1) {
+    invoice.value.transactions.splice(transactionIndex, 1)
+  }
+  
+  delete transactionSplits.value[transactionId]
+  delete manualValues.value[transactionId]
+  delete editableTransactionAmounts.value[transactionId]
+  delete tempTransactionAmounts.value[transactionId]
+  
+  notify.success(t('invoice.transactionDeleted'))
+}
+
+function openAddTransactionDialog() {
+  newTransaction.value = {
+    date: new Date().toISOString().split('T')[0]!,
+    description: '',
+    amount: 0
+  }
+  showAddTransactionDialog.value = true
+}
+
+function cancelAddTransaction() {
+  showAddTransactionDialog.value = false
+  newTransaction.value = {
+    date: new Date().toISOString().split('T')[0]!,
+    description: '',
+    amount: 0
+  }
+}
+
+async function addTransaction() {
+  if (!invoice.value) return
+  
+  if (!newTransaction.value.description.trim()) {
+    notify.error(t('invoice.description') + ' é obrigatória')
+    return
+  }
+  
+  const newId = `transaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  
+  const transaction: Transaction = {
+    id: newId,
+    date: new Date(newTransaction.value.date),
+    description: newTransaction.value.description,
+    amount: newTransaction.value.amount,
+    splits: [],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+  
+  invoice.value.transactions.push(transaction)
+  transactionSplits.value[newId] = {}
+  manualValues.value[newId] = {}
+  
+  showAddTransactionDialog.value = false
+  newTransaction.value = {
+    date: new Date().toISOString().split('T')[0]!,
+    description: '',
+    amount: 0
+  }
+  
+  notify.success(t('invoice.transactionAdded'))
+}
+
 async function saveInvoice() {
   if (!invoice.value) return
 
@@ -301,10 +515,10 @@ async function saveInvoice() {
       transactions: updatedTransactions
     })
     
-    notify('success', t('invoice.saved'))
+    notify.success(t('invoice.saved'))
   } catch (error) {
     console.error('Error saving invoice:', error)
-    notify('error', t('invoice.saveError'))
+    notify.error(t('invoice.saveError'))
   } finally {
     saving.value = false
   }
@@ -369,6 +583,10 @@ function generateWhatsAppMessages() {
   })
 
   showWhatsAppDialog.value = true
+}
+
+function closeWhatsAppDialog() {
+  showWhatsAppDialog.value = false
 }
 
 async function copyToClipboard(participantId: string) {
@@ -464,8 +682,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="invoice" style="display: flex; flex-direction: column; padding: 16px;">
-    <!-- Header Card -->
+  <div v-if="invoice" class="d-flex flex-column pa-4">
     <v-card class="mb-2">
       <v-card-text class="py-3">
         <v-row dense align="center">
@@ -547,7 +764,6 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <!-- Search Field -->
     <v-card class="mb-2">
       <v-card-text class="py-2">
         <v-text-field
@@ -561,12 +777,27 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <!-- Table Card -->
     <v-card class="mb-2">
       <v-card-text class="pa-0">
         <v-table density="compact" fixed-header height="calc(100dvh - 400px)">
             <thead>
               <tr>
+                <th class="text-center" style="width: 50px">
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-plus"
+                        size="x-small"
+                        variant="text"
+                        color="success"
+                        :disabled="isCompleted"
+                        @click="openAddTransactionDialog"
+                      />
+                    </template>
+                    <span>{{ t('invoice.addTransaction') }}</span>
+                  </v-tooltip>
+                </th>
                 <th class="text-left" style="min-width: 100px">{{ t('invoice.date') }}</th>
                 <th class="text-left" style="min-width: 200px">{{ t('invoice.description') }}</th>
                 <th class="text-right" style="min-width: 120px">{{ t('invoice.total') }}</th>
@@ -588,6 +819,22 @@ onMounted(async () => {
                 :key="transaction.id"
                 :class="{ 'bg-error-lighten-4': !isTransactionValid(transaction) }"
               >
+                <td class="text-center">
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-close"
+                        size="x-small"
+                        variant="text"
+                        color="error"
+                        :disabled="isCompleted"
+                        @click="confirmDeleteTransaction(transaction.id)"
+                      />
+                    </template>
+                    <span>{{ t('invoice.split.deleteTransaction') }}</span>
+                  </v-tooltip>
+                </td>
                 <td class="text-no-wrap">{{ new Date(transaction.date).toLocaleDateString('pt-BR') }}</td>
                 <td class="text-truncate" style="max-width: 200px">
                   <v-tooltip location="top">
@@ -598,7 +845,60 @@ onMounted(async () => {
                   </v-tooltip>
                 </td>
                 <td class="text-right font-weight-bold text-no-wrap">
-                  {{ transaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+                  <div v-if="!isTransactionAmountEditable(transaction.id)" class="d-flex align-center justify-end gap-1">
+                    <span>{{ transaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}</span>
+                    <v-tooltip location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-pencil"
+                          size="x-small"
+                          variant="text"
+                          :disabled="isCompleted"
+                          @click="toggleEditTransactionAmount(transaction.id)"
+                        />
+                      </template>
+                      <span>{{ t('invoice.split.editAmount') }}</span>
+                    </v-tooltip>
+                  </div>
+                  <div v-else class="d-flex align-center justify-end gap-1">
+                    <MoneyInput
+                      :ref="(el) => transactionAmountInputRefs[transaction.id] = el"
+                      :model-value="getTransactionAmount(transaction.id)"
+                      @update:model-value="(val) => updateTransactionAmount(transaction.id, val)"
+                      @keydown="(e: KeyboardEvent) => handleTransactionAmountKeydown(e, transaction.id)"
+                      density="compact"
+                      hide-details
+                      variant="outlined"
+                      style="width: 130px;"
+                    />
+                    <v-tooltip location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-check"
+                          size="x-small"
+                          variant="text"
+                          color="success"
+                          @click="saveTransactionAmount(transaction.id)"
+                        />
+                      </template>
+                      <span>{{ t('invoice.split.saveAmount') }}</span>
+                    </v-tooltip>
+                    <v-tooltip location="top">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          icon="mdi-close"
+                          size="x-small"
+                          variant="text"
+                          color="error"
+                          @click="cancelEditTransactionAmount(transaction.id)"
+                        />
+                      </template>
+                      <span>{{ t('common.cancel') }}</span>
+                    </v-tooltip>
+                  </div>
                 </td>
                 <td class="text-right font-weight-bold text-no-wrap" :class="getTransactionDifference(transaction) === 0 ? 'text-success' : 'text-error'">
                   {{ getTransactionDifference(transaction).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
@@ -687,12 +987,12 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <!-- Totals Card -->
     <v-card class="mt-2">
       <v-card-text class="pa-0">
         <v-table density="compact">
           <tbody>
             <tr class="bg-grey-lighten-4">
+              <td class="text-center" style="width: 50px"></td>
               <td class="text-left font-weight-bold" style="min-width: 100px">{{ t('invoice.split.totals') }}</td>
               <td class="text-left" style="min-width: 200px"></td>
               <td class="text-right font-weight-bold text-h6" style="min-width: 120px">
@@ -719,10 +1019,16 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <!-- WhatsApp Dialog -->
-    <v-dialog v-model="showWhatsAppDialog" max-width="800">
-      <v-card>
-        <v-card-title class="d-flex justify-space-between align-center">
+    <ModalBase
+      v-model="showWhatsAppDialog"
+      :title="t('invoice.whatsapp.title')"
+      :actions="whatsAppActions"
+      :max-width="800"
+      :fullscreen="isMobileOrTablet"
+      attach="body"
+    >
+      <template #title>
+        <div class="d-flex justify-space-between align-center w-100">
           <span>{{ t('invoice.whatsapp.title') }}</span>
           <v-btn
             color="primary"
@@ -733,59 +1039,90 @@ onMounted(async () => {
           >
             {{ copiedParticipantId === 'all' ? t('invoice.whatsapp.copiedAll') : t('invoice.whatsapp.copyAll') }}
           </v-btn>
-        </v-card-title>
-        <v-card-text>
-          <v-expansion-panels>
-            <v-expansion-panel
-              v-for="participant in participants.filter(p => (totalsByParticipant[p.id] || 0) !== 0)"
-              :key="participant.id"
-            >
-              <v-expansion-panel-title>
-                <div class="d-flex align-center justify-space-between w-100 pr-4">
-                  <span class="font-weight-medium">
-                    {{ participant.name }}
-                  </span>
-                  <span class="text-success font-weight-bold">
-                    {{ (totalsByParticipant[participant.id] || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
-                  </span>
-                </div>
-              </v-expansion-panel-title>
-              <v-expansion-panel-text>
-                <v-textarea
-                  :model-value="generatedMessages[participant.id]"
-                  readonly
-                  variant="outlined"
-                  rows="10"
-                  class="mb-4"
-                />
-                <div class="d-flex gap-2">
-                  <v-btn
-                    color="primary"
-                    prepend-icon="mdi-content-copy"
-                    @click="copyToClipboard(participant.id)"
-                  >
-                    {{ copiedParticipantId === participant.id ? t('invoice.whatsapp.copied') : t('invoice.whatsapp.copy') }}
-                  </v-btn>
-                  <v-btn
-                    color="success"
-                    prepend-icon="mdi-whatsapp"
-                    @click="openWhatsApp(participant.id)"
-                  >
-                    {{ t('invoice.whatsapp.send') }}
-                  </v-btn>
-                </div>
-              </v-expansion-panel-text>
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn @click="showWhatsAppDialog = false">
-            {{ t('common.close') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        </div>
+      </template>
+      
+      <v-expansion-panels>
+        <v-expansion-panel
+          v-for="participant in participants.filter(p => (totalsByParticipant[p.id] || 0) !== 0)"
+          :key="participant.id"
+        >
+          <v-expansion-panel-title>
+            <div class="d-flex align-center justify-space-between w-100 pr-4">
+              <span class="font-weight-medium">
+                {{ participant.name }}
+              </span>
+              <span class="text-success font-weight-bold">
+                {{ (totalsByParticipant[participant.id] || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+              </span>
+            </div>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <v-textarea
+              :model-value="generatedMessages[participant.id]"
+              readonly
+              variant="outlined"
+              rows="10"
+              class="mb-4"
+            />
+            <div class="d-flex gap-2">
+              <v-btn
+                color="primary"
+                prepend-icon="mdi-content-copy"
+                @click="copyToClipboard(participant.id)"
+              >
+                {{ copiedParticipantId === participant.id ? t('invoice.whatsapp.copied') : t('invoice.whatsapp.copy') }}
+              </v-btn>
+              <v-btn
+                color="success"
+                prepend-icon="mdi-whatsapp"
+                @click="openWhatsApp(participant.id)"
+              >
+                {{ t('invoice.whatsapp.send') }}
+              </v-btn>
+            </div>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </ModalBase>
+
+    <ModalBase
+      v-model="showAddTransactionDialog"
+      :title="t('invoice.addTransaction')"
+      :actions="addTransactionActions"
+      :max-width="500"
+      :fullscreen="isMobileOrTablet"
+      attach="body"
+    >
+      <v-row>
+        <v-col cols="12">
+          <v-text-field
+            v-model="newTransaction.date"
+            :label="t('invoice.date')"
+            type="date"
+            variant="outlined"
+            density="comfortable"
+          />
+        </v-col>
+        <v-col cols="12">
+          <v-text-field
+            v-model="newTransaction.description"
+            :label="t('invoice.description')"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+          />
+        </v-col>
+        <v-col cols="12">
+          <MoneyInput
+            v-model="newTransaction.amount"
+            :label="t('invoice.amount')"
+            variant="outlined"
+            density="comfortable"
+          />
+        </v-col>
+      </v-row>
+    </ModalBase>
   </div>
   <div v-else class="d-flex justify-center align-center" style="height: 400px">
     <v-progress-circular indeterminate color="primary" />

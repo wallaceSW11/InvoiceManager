@@ -13,6 +13,8 @@
           :headers="headers"
           :items="participantStore.participants"
           :loading="participantStore.loading"
+          fixed-header
+          height="calc(100dvh - 220px)"
         >
           <template #item.phoneNumber="{ item }">
             {{ formatPhone(item.phoneNumber) }}
@@ -39,11 +41,9 @@
     <ModalBase
       v-model="dialog"
       :title="editingParticipant ? t('participants.edit') : t('participants.new')"
-      :primary-button-text="t('common.save')"
-      :secondary-button-text="t('common.cancel')"
-      :disable-primary-button="!formValid"
+      :actions="modalActions"
       max-width="500"
-      :primary-action="saveParticipant"
+      :fullscreen="isMobileOrTablet"
     >
       <v-form ref="formRef" v-model="formValid">
         <v-text-field
@@ -82,13 +82,15 @@ import { useI18n } from 'vue-i18n'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { usePhoneMask } from '@/presentation/composables/usePhoneMask'
 import type { Participant } from '@/core/domain/entities'
-import ModalBase from '@/presentation/components/ModalBase.vue'
-import { useGlobals } from '@lib'
+import { ModalBase, useGlobals } from '@wallacesw11/base-lib'
+import { useBreakpoint } from '@wallacesw11/base-lib/composables'
+import type { ModalAction } from '@wallacesw11/base-lib'
 
 const { t } = useI18n()
 const participantStore = useParticipantStore()
 const { formatPhone, unformatPhone, validatePhone } = usePhoneMask()
 const { notify, confirm } = useGlobals()
+const { isMobileOrTablet } = useBreakpoint()
 
 const headers = computed(() => [
   { title: t('participants.name'), key: 'name' },
@@ -105,6 +107,22 @@ const form = ref({
   name: '',
   phoneNumber: ''
 })
+
+const modalActions = computed((): ModalAction[] => [
+  {
+    text: t('common.save'),
+    color: 'primary',
+    variant: 'elevated',
+    icon: 'mdi-content-save',
+    handler: saveParticipant
+  },
+  {
+    text: t('common.cancel'),
+    color: 'grey',
+    variant: 'text',
+    handler: () => { dialog.value = false }
+  }
+])
 
 onMounted(() => {
   participantStore.fetchParticipants()
@@ -152,7 +170,7 @@ async function saveParticipant() {
         ...form.value,
         phoneNumber: cleanPhone
       })
-      notify('success', t('participants.messages.updated'))
+      notify.success(t('participants.messages.updated'))
       dialog.value = false
       editingParticipant.value = null
     } else {
@@ -160,7 +178,7 @@ async function saveParticipant() {
         ...form.value,
         phoneNumber: cleanPhone
       })
-      notify('success', t('participants.messages.created'))
+      notify.success(t('participants.messages.created'))
       form.value = { name: '', phoneNumber: '' }
       formRef.value?.resetValidation()
       nextTick(() => {
@@ -169,12 +187,12 @@ async function saveParticipant() {
     }
   } catch (error) {
     console.error('Error saving participant:', error)
-    notify('error', t('participants.messages.error'))
+    notify.error(t('participants.messages.error'))
   }
 }
 
 async function confirmDelete(participant: Participant) {
-  const confirmed = await confirm(
+  const confirmed = await confirm.show(
     t('participants.deleteConfirm', { name: participant.name }),
     t('common.confirmDelete')
   )
@@ -182,10 +200,10 @@ async function confirmDelete(participant: Participant) {
   if (confirmed) {
     try {
       await participantStore.deleteParticipant(participant.id)
-      notify('success', t('participants.messages.deleted'))
+      notify.success(t('participants.messages.deleted'))
     } catch (error) {
       console.error('Error deleting participant:', error)
-      notify('error', t('participants.messages.error'))
+      notify.error(t('participants.messages.error'))
     }
   }
 }

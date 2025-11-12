@@ -176,7 +176,14 @@ export default {
       difference: 'Diferença',
       search: 'Pesquisar compras',
       totals: 'Totais',
-      noParticipantsSelected: 'Selecione os participantes para começar a dividir os valores'
+      noParticipantsSelected: 'Selecione os participantes para começar a dividir os valores',
+      editAmount: 'Editar valor do lançamento',
+      saveAmount: 'Salvar valor',
+      invalidAmount: 'Valor inválido',
+      amountUpdated: 'Valor do lançamento atualizado. Os valores dos participantes foram limpos.',
+      deleteTransaction: 'Excluir lançamento',
+      confirmDelete: 'Tem certeza que deseja excluir este lançamento?',
+      confirmDeleteMessage: 'Esta ação não pode ser desfeita.'
     },
     whatsapp: {
       title: 'Mensagens WhatsApp',
@@ -197,7 +204,10 @@ export default {
     },
     saved: 'Fatura salva',
     savedMessage: 'A fatura foi salva',
-    saveError: 'Falha ao salvar a fatura'
+    saveError: 'Falha ao salvar a fatura',
+    transactionDeleted: 'Lançamento excluído',
+    addTransaction: 'Adicionar Lançamento',
+    transactionAdded: 'Lançamento adicionado'
   },
   export: {
     title: 'Exportar Dados',

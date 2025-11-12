@@ -21,6 +21,8 @@
           :items="invoiceStore.invoices"
           :loading="invoiceStore.loading"
           item-value="id"
+          fixed-header
+          height="calc(100dvh - 290px)"
         >
           <template #item.cardId="{ item }">
             {{ getCardName(item.cardId) }}
@@ -79,7 +81,7 @@ import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import { InvoiceStatus } from '@/core/domain/enums'
 import type { Invoice } from '@/core/domain/entities'
-import { useGlobals } from '@lib'
+import { useGlobals } from '@wallacesw11/base-lib'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -123,7 +125,7 @@ function viewInvoice(id: string) {
 }
 
 async function confirmDelete(invoice: Invoice) {
-  const confirmed = await confirm(
+  const confirmed = await confirm.show(
     t('invoice.list.deleteConfirm'),
     t('invoice.list.deleteMessage', { 
       card: getCardName(invoice.cardId),
@@ -134,10 +136,10 @@ async function confirmDelete(invoice: Invoice) {
   if (confirmed) {
     try {
       await invoiceStore.deleteInvoice(invoice.id)
-      notify('success', t('invoice.messages.deleted'))
+      notify.success(t('invoice.messages.deleted'))
     } catch (error) {
       console.error('Failed to delete invoice:', error)
-      notify('error', t('invoice.messages.error'))
+      notify.error(t('invoice.messages.error'))
     }
   }
 }

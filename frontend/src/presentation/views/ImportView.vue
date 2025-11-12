@@ -90,7 +90,7 @@ import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
-import { notify } from '@lib'
+import { notify } from '@wallacesw11/base-lib'
 import type { Card } from '@/core/domain/entities/Card'
 import type { Participant } from '@/core/domain/entities/Participant'
 import type { Invoice } from '@/core/domain/entities/Invoice'
@@ -218,12 +218,12 @@ async function importCards() {
     await cardStore.fetchCards()
 
     const time = formatImportTime()
-    notify('success', getSuccessMessage('cards', data.length))
+    notify.success(getSuccessMessage('cards', data.length))
     importHints.value.cards = t('import.importedAt', { count: data.length, time })
     files.value.cards = undefined
   } catch (error) {
     console.error('Error importing cards:', error)
-    notify('error', t('import.error'))
+    notify.error(t('import.error'))
     files.value.cards = undefined
   } finally {
     loading.value.cards = false
@@ -272,12 +272,12 @@ async function importParticipants() {
     await participantStore.fetchParticipants()
 
     const time = formatImportTime()
-    notify('success', getSuccessMessage('participants', data.length))
+    notify.success(getSuccessMessage('participants', data.length))
     importHints.value.participants = t('import.importedAt', { count: data.length, time })
     files.value.participants = undefined
   } catch (error) {
     console.error('Error importing participants:', error)
-    notify('error', t('import.error'))
+    notify.error(t('import.error'))
     files.value.participants = undefined
   } finally {
     loading.value.participants = false
@@ -354,12 +354,12 @@ async function importInvoices() {
     await invoiceStore.fetchInvoices()
 
     const time = formatImportTime()
-    notify('success', getSuccessMessage('invoices', data.length))
+    notify.success(getSuccessMessage('invoices', data.length))
     importHints.value.invoices = t('import.importedAt', { count: data.length, time })
     files.value.invoices = undefined
   } catch (error) {
     console.error('Error importing invoices:', error)
-    notify('error', t('import.error'))
+    notify.error(t('import.error'))
     files.value.invoices = undefined
   } finally {
     loading.value.invoices = false

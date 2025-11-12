@@ -13,6 +13,8 @@
           :headers="headers"
           :items="cardStore.cards"
           :loading="cardStore.loading"
+          fixed-header
+          height="calc(100dvh - 220px)"
         >
           <template #item.lastFourDigits="{ item }">
             **** {{ item.lastFourDigits }}
@@ -39,11 +41,9 @@
     <ModalBase
       v-model="dialog"
       :title="editingCard ? t('cards.edit') : t('cards.new')"
-      :primary-button-text="t('common.save')"
-      :secondary-button-text="t('common.cancel')"
-      :disable-primary-button="!formValid"
+      :actions="modalActions"
       max-width="500"
-      :primary-action="saveCard"
+      :fullscreen="isMobileOrTablet"
     >
       <v-form ref="formRef" v-model="formValid">
         <v-text-field
@@ -79,12 +79,14 @@ import { ref, onMounted, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import type { Card } from '@/core/domain/entities'
-import ModalBase from '@/presentation/components/ModalBase.vue'
-import { useGlobals } from '@lib'
+import { ModalBase, useGlobals } from '@wallacesw11/base-lib'
+import { useBreakpoint } from '@wallacesw11/base-lib/composables'
+import type { ModalAction } from '@wallacesw11/base-lib'
 
 const { t } = useI18n()
 const cardStore = useCardStore()
 const { notify, confirm } = useGlobals()
+const { isMobileOrTablet } = useBreakpoint()
 
 const headers = computed(() => [
   { title: t('cards.nickname'), key: 'nickname' },
@@ -101,6 +103,22 @@ const form = ref({
   nickname: '',
   lastFourDigits: ''
 })
+
+const modalActions = computed((): ModalAction[] => [
+  {
+    text: t('common.save'),
+    color: 'primary',
+    variant: 'elevated',
+    icon: 'mdi-content-save',
+    handler: saveCard
+  },
+  {
+    text: t('common.cancel'),
+    color: 'grey',
+    variant: 'text',
+    handler: () => { dialog.value = false }
+  }
+])
 
 onMounted(() => {
   cardStore.fetchCards()
@@ -129,12 +147,12 @@ async function saveCard() {
   try {
     if (editingCard.value) {
       await cardStore.updateCard(editingCard.value.id, form.value)
-      notify('success', t('cards.messages.updated'))
+      notify.success(t('cards.messages.updated'))
       dialog.value = false
       editingCard.value = null
     } else {
       await cardStore.createCard(form.value)
-      notify('success', t('cards.messages.created'))
+      notify.success(t('cards.messages.created'))
       form.value = { nickname: '', lastFourDigits: '' }
       formRef.value?.resetValidation()
       nextTick(() => {
@@ -143,12 +161,12 @@ async function saveCard() {
     }
   } catch (error) {
     console.error('Error saving card:', error)
-    notify('error', t('cards.messages.error'))
+    notify.error(t('cards.messages.error'))
   }
 }
 
 async function confirmDelete(card: Card) {
-  const confirmed = await confirm(
+  const confirmed = await confirm.show(
     t('cards.deleteConfirm', { nickname: card.nickname }),
     t('common.confirmDelete')
   )
@@ -156,10 +174,10 @@ async function confirmDelete(card: Card) {
   if (confirmed) {
     try {
       await cardStore.deleteCard(card.id)
-      notify('success', t('cards.messages.deleted'))
+      notify.success(t('cards.messages.deleted'))
     } catch (error) {
       console.error('Error deleting card:', error)
-      notify('error', t('cards.messages.error'))
+      notify.error(t('cards.messages.error'))
     }
   }
 }

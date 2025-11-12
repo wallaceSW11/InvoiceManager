@@ -4,13 +4,15 @@ import { useI18n } from "vue-i18n";
 import { useCardStore } from "@/presentation/stores/cardStore";
 import { useInvoiceStore } from "@/presentation/stores/invoiceStore";
 import { CSVParser } from "@/infrastructure/parsers";
-import ModalBase from "./ModalBase.vue";
-import { useGlobals } from "@lib";
+import { ModalBase, useGlobals } from "@wallacesw11/base-lib";
+import { useBreakpoint } from "@wallacesw11/base-lib/composables";
+import type { ModalAction } from "@wallacesw11/base-lib";
 
 const { t } = useI18n();
 const cardStore = useCardStore();
 const invoiceStore = useInvoiceStore();
 const { notify } = useGlobals();
+const { isMobileOrTablet } = useBreakpoint();
 
 const emit = defineEmits<{
   close: [];
@@ -31,6 +33,22 @@ const isValid = computed(() => {
     selectedCardId.value !== "" && dueDate.value !== "" && file.value !== null
   );
 });
+
+const modalActions = computed((): ModalAction[] => [
+  {
+    text: t('invoice.import.import'),
+    color: 'primary',
+    variant: 'elevated',
+    icon: 'mdi-file-upload',
+    handler: importInvoice
+  },
+  {
+    text: t('common.cancel'),
+    color: 'grey',
+    variant: 'text',
+    handler: () => { dialog.value = false }
+  }
+]);
 
 async function handleFileChange(files: File | File[]) {
   const fileArray = Array.isArray(files) ? files : [files];
@@ -67,7 +85,7 @@ async function importInvoice() {
       setTimeout(() => {
         resetDialog();
       }, 100);
-      notify("info", t("invoice.import.alreadyExists"));
+      notify.info(t("invoice.import.alreadyExists"));
       
       return;
     }
@@ -105,7 +123,7 @@ async function importInvoice() {
         .sort((a, b) => a.date.getTime() - b.date.getTime()),
     });
 
-    notify("success", t("invoice.import.messages.success"));
+    notify.success(t("invoice.import.messages.success"));
     emit("imported", newInvoice.id);
 
     setTimeout(() => {
@@ -113,7 +131,7 @@ async function importInvoice() {
     }, 100);
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err);
-    notify("error", t("invoice.import.messages.error"));
+    notify.error(t("invoice.import.messages.error"));
     loading.value = false;
   }
 }
@@ -135,12 +153,9 @@ cardStore.fetchCards();
   <ModalBase
     v-model="dialog"
     :title="t('invoice.import.title')"
-    :primary-button-text="t('invoice.import.import')"
-    :secondary-button-text="t('common.cancel')"
-    :disable-primary-button="!isValid"
-    primary-icon="mdi-file-upload"
+    :actions="modalActions"
+    :fullscreen="isMobileOrTablet"
     max-width="600"
-    :primary-action="importInvoice"
   >
     <v-form @submit.prevent="importInvoice">
       <v-select
