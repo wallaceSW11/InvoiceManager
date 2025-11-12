@@ -11,7 +11,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: false, // Desabilita PWA em desenvolvimento para evitar cache issues
+        enabled: false,
         type: 'module'
       },
       includeAssets: ['favicon.ico'],
@@ -44,7 +44,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // Não faz cache de navegação durante desenvolvimento
         navigateFallback: undefined,
         runtimeCaching: [
           {
@@ -54,7 +53,7 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -74,30 +73,80 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Separa node_modules em chunks específicos
           if (id.includes('node_modules')) {
-            // Vuetify e seus componentes
             if (id.includes('vuetify')) {
               return 'vuetify';
             }
-            // Vue core (vue, vue-router, pinia)
+            if (id.includes('@mdi/font')) {
+              return 'mdi';
+            }
             if (id.includes('vue-router') || id.includes('pinia')) {
               return 'vue-vendor';
             }
-            if (id.includes('node_modules/vue/')) {
+            if (id.includes('/vue/') || id.includes('/vue@')) {
               return 'vue-vendor';
             }
-            // i18n
             if (id.includes('vue-i18n')) {
               return 'i18n';
             }
-            // Outras dependências grandes
+            if (id.includes('@wallacesw11/base-lib')) {
+              return 'base-lib';
+            }
+            if (id.includes('big.js') || id.includes('v-money3')) {
+              return 'math-utils';
+            }
+            if (id.includes('axios')) {
+              return 'axios';
+            }
+            if (id.includes('workbox')) {
+              return 'pwa';
+            }
             return 'vendor';
+          }
+          
+          if (id.includes('/infrastructure/')) {
+            if (id.includes('/parsers/')) {
+              return 'parsers';
+            }
+            if (id.includes('/repositories/')) {
+              return 'repositories';
+            }
+            return 'infrastructure';
+          }
+          
+          if (id.includes('/core/')) {
+            return 'core-domain';
           }
         }
       }
     },
-    // Aumenta o limite do aviso para chunks maiores
-    chunkSizeWarningLimit: 700,
+    chunkSizeWarningLimit: 650,
+    cssCodeSplit: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+        passes: 2
+      },
+      mangle: {
+        safari10: true
+      }
+    },
+    reportCompressedSize: false,
+    sourcemap: false,
+    assetsInlineLimit: 4096,
+  },
+  optimizeDeps: {
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      'vuetify',
+      '@mdi/font',
+      'vue-i18n'
+    ],
+    exclude: ['@wallacesw11/base-lib']
   }
 })
