@@ -1,27 +1,27 @@
-import { vi, beforeEach } from 'vitest'
+import { vi, beforeEach } from 'vitest';
 
 // Mock localStorage
 const localStorageMock = (() => {
-  let store: Record<string, string> = {}
+  let store: Record<string, string> = {};
 
   return {
     getItem: (key: string) => store[key] || null,
     setItem: (key: string, value: string) => {
-      store[key] = value.toString()
+      store[key] = value.toString();
     },
     removeItem: (key: string) => {
-      delete store[key]
+      delete store[key];
     },
     clear: () => {
-      store = {}
+      store = {};
     }
-  }
-})()
+  };
+})();
 
-global.localStorage = localStorageMock as any
+global.localStorage = localStorageMock as any;
 
 // Reset localStorage before each test
 beforeEach(() => {
-  localStorage.clear()
-  vi.clearAllMocks()
-})
+  localStorage.clear();
+  vi.clearAllMocks();
+});

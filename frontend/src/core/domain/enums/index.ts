@@ -1,2 +1,2 @@
-export { InvoiceStatus } from './InvoiceStatus'
-export { SplitMode } from './SplitMode'
+export { InvoiceStatus } from './InvoiceStatus';
+export { SplitMode } from './SplitMode';

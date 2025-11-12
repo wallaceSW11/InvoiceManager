@@ -214,7 +214,8 @@ export default {
   },
   export: {
     title: 'Exportar Dados',
-    description: 'Selecione os dados que deseja exportar. Os arquivos serão baixados no formato JSON.',
+    description:
+      'Selecione os dados que deseja exportar. Os arquivos serão baixados no formato JSON.',
     cards: 'Cartões',
     participants: 'Participantes',
     invoices: 'Faturas',
@@ -225,8 +226,10 @@ export default {
   },
   import: {
     title: 'Importar Dados',
-    description: 'Selecione os arquivos JSON para importar. Os dados do tipo selecionado serão substituídos.',
-    warning: 'ATENÇÃO: Ao importar, todos os dados existentes do tipo selecionado (Cartões, Participantes ou Faturas) serão excluídos e substituídos pelos dados do arquivo.',
+    description:
+      'Selecione os arquivos JSON para importar. Os dados do tipo selecionado serão substituídos.',
+    warning:
+      'ATENÇÃO: Ao importar, todos os dados existentes do tipo selecionado (Cartões, Participantes ou Faturas) serão excluídos e substituídos pelos dados do arquivo.',
     cards: 'Cartões',
     participants: 'Participantes',
     invoices: 'Faturas',
@@ -246,4 +249,4 @@ export default {
     light: 'Modo claro',
     dark: 'Modo escuro'
   }
-}
+};

@@ -1,1 +1,1 @@
-export { MoneyCalculator } from './MoneyCalculator'
+export { MoneyCalculator } from './MoneyCalculator';

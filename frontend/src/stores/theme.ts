@@ -1,5 +1,5 @@
-import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
 
 export interface ThemeConfig {
   name: string;
@@ -24,39 +24,33 @@ export interface ThemeConfig {
   };
 }
 
-export const useThemeStore = defineStore("theme", () => {
+export const useThemeStore = defineStore('theme', () => {
   const themeConfig = ref<ThemeConfig | null>(null);
   const isDark = ref(false);
   const isLoading = ref(true);
 
-  const currentMode = computed(() => (isDark.value ? "dark" : "light"));
-  const currentLogo = computed(
-    () => themeConfig.value?.logo[currentMode.value] || ""
-  );
-  const currentColors = computed(
-    () => themeConfig.value?.colors[currentMode.value] || {}
-  );
-  const appName = computed(
-    () => themeConfig.value?.customization.appName || "Vue3 Base"
-  );
+  const currentMode = computed(() => (isDark.value ? 'dark' : 'light'));
+  const currentLogo = computed(() => themeConfig.value?.logo[currentMode.value] || '');
+  const currentColors = computed(() => themeConfig.value?.colors[currentMode.value] || {});
+  const appName = computed(() => themeConfig.value?.customization.appName || 'Vue3 Base');
 
   function loadSavedThemePreference() {
-    const savedTheme = localStorage.getItem("app-theme");
-    isDark.value = savedTheme === "dark";
+    const savedTheme = localStorage.getItem('app-theme');
+    isDark.value = savedTheme === 'dark';
   }
 
   function applyThemeToVuetify() {
     if (!themeConfig.value) return;
 
     const html = document.documentElement;
-    html.setAttribute("data-theme", currentMode.value);
+    html.setAttribute('data-theme', currentMode.value);
 
     window.dispatchEvent(
-      new CustomEvent("theme-changed", {
+      new CustomEvent('theme-changed', {
         detail: {
           mode: currentMode.value,
-          colors: currentColors.value,
-        },
+          colors: currentColors.value
+        }
       })
     );
   }
@@ -64,16 +58,16 @@ export const useThemeStore = defineStore("theme", () => {
   async function loadTheme() {
     try {
       isLoading.value = true;
-      const response = await fetch("/theme.json");
+      const response = await fetch('/theme.json');
       if (!response.ok) {
-        throw new Error("Failed to load theme configuration");
+        throw new Error('Failed to load theme configuration');
       }
       themeConfig.value = await response.json();
 
       loadSavedThemePreference();
       applyThemeToVuetify();
     } catch (error) {
-      console.error("Error loading theme:", error);
+      console.error('Error loading theme:', error);
     } finally {
       isLoading.value = false;
     }
@@ -81,13 +75,13 @@ export const useThemeStore = defineStore("theme", () => {
 
   function toggleTheme() {
     isDark.value = !isDark.value;
-    localStorage.setItem("app-theme", currentMode.value);
+    localStorage.setItem('app-theme', currentMode.value);
     applyThemeToVuetify();
   }
 
-  function setTheme(mode: "light" | "dark") {
-    isDark.value = mode === "dark";
-    localStorage.setItem("app-theme", mode);
+  function setTheme(mode: 'light' | 'dark') {
+    isDark.value = mode === 'dark';
+    localStorage.setItem('app-theme', mode);
     applyThemeToVuetify();
   }
 
@@ -96,7 +90,7 @@ export const useThemeStore = defineStore("theme", () => {
 
     themeConfig.value.colors[currentMode.value] = {
       ...themeConfig.value.colors[currentMode.value],
-      ...colors,
+      ...colors
     };
     applyThemeToVuetify();
   }
@@ -112,6 +106,6 @@ export const useThemeStore = defineStore("theme", () => {
     loadTheme,
     toggleTheme,
     setTheme,
-    updateThemeColors,
+    updateThemeColors
   };
 });

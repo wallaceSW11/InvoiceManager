@@ -11,25 +11,31 @@
     @click="handleClick"
     inputmode="decimal"
   >
-    <template v-if="$slots.prepend" #prepend>
+    <template
+      v-if="$slots.prepend"
+      #prepend
+    >
       <slot name="prepend" />
     </template>
-    <template v-if="$slots.append" #append>
+    <template
+      v-if="$slots.append"
+      #append
+    >
       <slot name="append" />
     </template>
   </v-text-field>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick } from 'vue';
 
 interface Props {
-  modelValue?: number | null
-  label?: string
-  rules?: any[]
-  disabled?: boolean
-  hint?: string
-  persistentHint?: boolean
+  modelValue?: number | null;
+  label?: string;
+  rules?: any[];
+  disabled?: boolean;
+  hint?: string;
+  persistentHint?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -38,59 +44,63 @@ const props = withDefaults(defineProps<Props>(), {
   rules: () => [],
   disabled: false,
   hint: '',
-  persistentHint: false,
-})
+  persistentHint: false
+});
 
 const emit = defineEmits<{
-  'update:modelValue': [value: number]
-}>()
+  'update:modelValue': [value: number];
+}>();
 
-const formattedValue = ref('R$ 0,00')
+const formattedValue = ref('R$ 0,00');
 
 function formatMoney(value: number): string {
-  const absValue = Math.abs(value)
+  const absValue = Math.abs(value);
   const formatted = absValue.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  })
-  return value < 0 ? '-R$ ' + formatted : 'R$ ' + formatted
+  });
+  return value < 0 ? '-R$ ' + formatted : 'R$ ' + formatted;
 }
 
 function parseMoneyInput(input: string): number {
-  const isNegative = input.includes('-')
-  
-  const numbers = input.replace(/\D/g, '')
-  if (!numbers) return 0
-  
-  const value = parseInt(numbers) / 100
-  const rounded = Number((isNegative ? -value : value).toFixed(2))
-  return rounded
+  const isNegative = input.includes('-');
+
+  const numbers = input.replace(/\D/g, '');
+  if (!numbers) return 0;
+
+  const value = parseInt(numbers) / 100;
+  const rounded = Number((isNegative ? -value : value).toFixed(2));
+  return rounded;
 }
 
 function handleInput(value: string) {
-  const numericValue = parseMoneyInput(value)
-  formattedValue.value = formatMoney(numericValue)
-  emit('update:modelValue', numericValue)
+  const numericValue = parseMoneyInput(value);
+  formattedValue.value = formatMoney(numericValue);
+  emit('update:modelValue', numericValue);
 }
 
 function handleFocus(event: FocusEvent) {
-  const input = event.target as HTMLInputElement
+  const input = event.target as HTMLInputElement;
   nextTick(() => {
-    input.setSelectionRange(input.value.length, input.value.length)
-  })
+    input.setSelectionRange(input.value.length, input.value.length);
+  });
 }
 
 function handleClick(event: MouseEvent) {
-  const input = event.target as HTMLInputElement
+  const input = event.target as HTMLInputElement;
   nextTick(() => {
-    input.setSelectionRange(input.value.length, input.value.length)
-  })
+    input.setSelectionRange(input.value.length, input.value.length);
+  });
 }
 
-watch(() => props.modelValue, (newVal) => {
-  const value = newVal ?? 0
-  formattedValue.value = formatMoney(value)
-}, { immediate: true })
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    const value = newVal ?? 0;
+    formattedValue.value = formatMoney(value);
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>

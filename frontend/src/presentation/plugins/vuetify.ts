@@ -1,34 +1,34 @@
-import '@mdi/font/css/materialdesignicons.css'
-import 'vuetify/lib/styles/main.css'
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
+import '@mdi/font/css/materialdesignicons.css';
+import 'vuetify/lib/styles/main.css';
+import { createVuetify } from 'vuetify';
+import * as components from 'vuetify/components';
+import * as directives from 'vuetify/directives';
 
 export default createVuetify({
   components,
   directives,
   defaults: {
     VTextField: {
-      variant: 'underlined',
+      variant: 'underlined'
     },
     VTextarea: {
-      variant: 'underlined',
+      variant: 'underlined'
     },
     VSelect: {
-      variant: 'underlined',
+      variant: 'underlined'
     },
     VAutocomplete: {
-      variant: 'underlined',
+      variant: 'underlined'
     },
     VCombobox: {
-      variant: 'underlined',
+      variant: 'underlined'
     },
     VFileInput: {
-      variant: 'underlined',
+      variant: 'underlined'
     },
     VBtn: {
-      class: 'text-none',
-    },
+      class: 'text-none'
+    }
   },
   theme: {
     defaultTheme: 'light',
@@ -41,8 +41,8 @@ export default createVuetify({
           error: '#FF5252',
           info: '#2196F3',
           success: '#4CAF50',
-          warning: '#FB8C00',
-        },
+          warning: '#FB8C00'
+        }
       },
       dark: {
         colors: {
@@ -52,9 +52,9 @@ export default createVuetify({
           error: '#FF5252',
           info: '#2196F3',
           success: '#4CAF50',
-          warning: '#FB8C00',
-        },
-      },
-    },
-  },
-})
+          warning: '#FB8C00'
+        }
+      }
+    }
+  }
+});

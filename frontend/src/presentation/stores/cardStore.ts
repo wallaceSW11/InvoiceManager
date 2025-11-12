@@ -1,79 +1,79 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { Card, CreateCardDTO, UpdateCardDTO } from '@/core/domain/entities'
-import { LocalStorageCardRepository } from '@/infrastructure/repositories/localstorage'
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { Card, CreateCardDTO, UpdateCardDTO } from '@/core/domain/entities';
+import { LocalStorageCardRepository } from '@/infrastructure/repositories/localstorage';
 
-const cardRepository = new LocalStorageCardRepository()
+const cardRepository = new LocalStorageCardRepository();
 
 export const useCardStore = defineStore('card', () => {
-  const cards = ref<Card[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const cards = ref<Card[]>([]);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
 
-  const cardCount = computed(() => cards.value.length)
+  const cardCount = computed(() => cards.value.length);
 
   async function fetchCards() {
-    loading.value = true
-    error.value = null
+    loading.value = true;
+    error.value = null;
     try {
-      cards.value = await cardRepository.findAll()
+      cards.value = await cardRepository.findAll();
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch cards'
-      throw e
+      error.value = e instanceof Error ? e.message : 'Failed to fetch cards';
+      throw e;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
   async function createCard(dto: CreateCardDTO) {
-    loading.value = true
-    error.value = null
+    loading.value = true;
+    error.value = null;
     try {
-      const card = await cardRepository.create(dto)
-      cards.value.push(card)
-      return card
+      const card = await cardRepository.create(dto);
+      cards.value.push(card);
+      return card;
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to create card'
-      throw e
+      error.value = e instanceof Error ? e.message : 'Failed to create card';
+      throw e;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
   async function updateCard(id: string, dto: UpdateCardDTO) {
-    loading.value = true
-    error.value = null
+    loading.value = true;
+    error.value = null;
     try {
-      const card = await cardRepository.update(id, dto)
-      const index = cards.value.findIndex(c => c.id === id)
+      const card = await cardRepository.update(id, dto);
+      const index = cards.value.findIndex((c) => c.id === id);
       if (index !== -1) {
-        cards.value[index] = card
+        cards.value[index] = card;
       }
-      return card
+      return card;
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to update card'
-      throw e
+      error.value = e instanceof Error ? e.message : 'Failed to update card';
+      throw e;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
   async function deleteCard(id: string) {
-    loading.value = true
-    error.value = null
+    loading.value = true;
+    error.value = null;
     try {
-      await cardRepository.delete(id)
-      cards.value = cards.value.filter(c => c.id !== id)
+      await cardRepository.delete(id);
+      cards.value = cards.value.filter((c) => c.id !== id);
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to delete card'
-      throw e
+      error.value = e instanceof Error ? e.message : 'Failed to delete card';
+      throw e;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
   function getCardById(id: string) {
-    return cards.value.find(c => c.id === id)
+    return cards.value.find((c) => c.id === id);
   }
 
   return {
@@ -86,5 +86,5 @@ export const useCardStore = defineStore('card', () => {
     updateCard,
     deleteCard,
     getCardById
-  }
-})
+  };
+});

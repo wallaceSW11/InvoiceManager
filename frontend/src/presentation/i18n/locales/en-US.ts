@@ -226,7 +226,8 @@ export default {
   import: {
     title: 'Import Data',
     description: 'Select JSON files to import. Data of the selected type will be replaced.',
-    warning: 'WARNING: When importing, all existing data of the selected type (Cards, Participants or Invoices) will be deleted and replaced with the file data.',
+    warning:
+      'WARNING: When importing, all existing data of the selected type (Cards, Participants or Invoices) will be deleted and replaced with the file data.',
     cards: 'Cards',
     participants: 'Participants',
     invoices: 'Invoices',
@@ -246,4 +247,4 @@ export default {
     light: 'Light mode',
     dark: 'Dark mode'
   }
-}
+};
