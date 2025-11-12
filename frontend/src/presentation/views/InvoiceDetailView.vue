@@ -9,6 +9,7 @@ import { useCardStore } from '@/presentation/stores/cardStore';
 import { SplitMode, InvoiceStatus } from '@/core/domain/enums';
 import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities';
 import { MoneyCalculator } from '@/shared/utils/MoneyCalculator';
+import { generateWhatsAppSummaryMessage } from '@/shared/utils';
 import MoneyInput from '@/presentation/components/common/MoneyInput.vue';
 import { notify, confirm, ModalBase } from '@wallacesw11/base-lib';
 import { useBreakpoint } from '@wallacesw11/base-lib/composables';
@@ -614,50 +615,13 @@ async function copyToClipboard(participantId: string) {
 async function copyAllMessages() {
   if (!invoice.value || !card.value) return;
 
-  const cardName = `${card.value.nickname} (*${card.value.lastFourDigits})`;
-  const dueDate = new Date(invoice.value.dueDate).toLocaleDateString('pt-BR');
-
-  let fullMessage = `📄 RESUMO COMPLETO DA FATURA\n`;
-  fullMessage += `Cartão: ${cardName}\n`;
-  fullMessage += `Vencimento: ${dueDate}\n`;
-  fullMessage += `${'='.repeat(50)}\n\n`;
-
-  const participantsWithValues = participants.value.filter(
-    (p) => (totalsByParticipant.value[p.id] || 0) !== 0
+  const fullMessage = generateWhatsAppSummaryMessage(
+    invoice.value,
+    card.value,
+    participants.value,
+    totalsByParticipant.value,
+    getSplitValue
   );
-
-  participantsWithValues.forEach((participant, index) => {
-    const total = totalsByParticipant.value[participant.id] || 0;
-    const totalStr = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    fullMessage += `👤 ${participant.name.toUpperCase()}\n`;
-    fullMessage += `${'-'.repeat(50)}\n`;
-
-    invoice.value!.transactions.forEach((transaction) => {
-      const splitAmount = getSplitValue(transaction.id, participant.id);
-      if (splitAmount !== 0) {
-        const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR');
-        const amountStr = splitAmount.toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        });
-        fullMessage += `  • ${dateStr} - ${transaction.description}: ${amountStr}\n`;
-      }
-    });
-
-    fullMessage += `\n  💰 TOTAL: ${totalStr}\n`;
-
-    if (index < participantsWithValues.length - 1) {
-      fullMessage += `\n${'='.repeat(50)}\n\n`;
-    }
-  });
-
-  const grandTotalStr = grandTotal.value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  });
-  fullMessage += `\n${'='.repeat(50)}\n`;
-  fullMessage += `💵 TOTAL GERAL DA FATURA: ${grandTotalStr}`;
 
   try {
     await navigator.clipboard.writeText(fullMessage);
@@ -1188,24 +1152,21 @@ onMounted(async () => {
       :fullscreen="isMobileOrTablet"
       attach="body"
     >
-      <template #title>
-        <div class="d-flex justify-space-between align-center w-100">
-          <span>{{ t('invoice.whatsapp.title') }}</span>
-          <v-btn
-            color="primary"
-            variant="tonal"
-            prepend-icon="mdi-content-copy"
-            @click="copyAllMessages"
-            size="small"
-          >
-            {{
-              copiedParticipantId === 'all'
-                ? t('invoice.whatsapp.copiedAll')
-                : t('invoice.whatsapp.copyAll')
-            }}
-          </v-btn>
-        </div>
-      </template>
+      <div class="mb-4 d-flex justify-end">
+        <v-btn
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-content-copy"
+          @click="copyAllMessages"
+          size="small"
+        >
+          {{
+            copiedParticipantId === 'all'
+              ? t('invoice.whatsapp.copiedAll')
+              : t('invoice.whatsapp.copyAll')
+          }}
+        </v-btn>
+      </div>
 
       <v-expansion-panels>
         <v-expansion-panel
