@@ -144,9 +144,8 @@ export default defineConfig({
       'vue-router',
       'pinia',
       'vuetify',
-      '@mdi/font',
       'vue-i18n'
     ],
-    exclude: ['@wallacesw11/base-lib']
+    exclude: ['@wallacesw11/base-lib', '@mdi/font']
   }
 })

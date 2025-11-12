@@ -1,20 +1,22 @@
 <template>
   <div>
-    <v-card>
-      <v-card-title class="d-flex justify-space-between align-center">
-        <span>{{ t('participants.title') }}</span>
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="openDialog()">
-          {{ t('common.add') }}
-        </v-btn>
-      </v-card-title>
+    <div class="d-flex justify-space-between align-center mb-4">
+      <h1 class="text-h4">{{ t('participants.title') }}</h1>
+      <v-btn color="primary" prepend-icon="mdi-plus" @click="openDialog()">
+        {{ t('common.add') }}
+      </v-btn>
+    </div>
 
+    <v-divider class="mb-4" />
+
+    <v-card>
       <v-card-text>
         <v-data-table
           :headers="headers"
           :items="participantStore.participants"
           :loading="participantStore.loading"
           fixed-header
-          height="calc(100dvh - 220px)"
+          height="calc(100dvh - 260px)"
         >
           <template #item.phoneNumber="{ item }">
             {{ formatPhone(item.phoneNumber) }}

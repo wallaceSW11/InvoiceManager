@@ -1,20 +1,10 @@
 <template>
   <div>
-    <v-row class="mb-4">
-      <v-col>
-        <h1 class="text-h4">{{ t('invoice.list.title') }}</h1>
-      </v-col>
-    </v-row>
+    <h1 class="text-h4 mb-4">{{ t('invoice.list.title') }}</h1>
+
+    <v-divider class="mb-4" />
 
     <v-card>
-      <v-card-title>
-        <v-row align="center">
-          <v-col>
-            {{ t('invoice.list.subtitle') }}
-          </v-col>
-        </v-row>
-      </v-card-title>
-
       <v-card-text>
         <v-data-table
           :headers="headers"
@@ -22,7 +12,7 @@
           :loading="invoiceStore.loading"
           item-value="id"
           fixed-header
-          height="calc(100dvh - 290px)"
+          height="calc(100dvh - 260px)"
         >
           <template #item.cardId="{ item }">
             {{ getCardName(item.cardId) }}
