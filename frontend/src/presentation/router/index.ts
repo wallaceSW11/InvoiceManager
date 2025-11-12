@@ -55,7 +55,7 @@ const router = createRouter({
 })
 
 router.beforeEach((_to, _from, next) => {
-  document.title = 'InvoiceManager'
+  document.title = 'Invoice Manager'
   next()
 })
 
