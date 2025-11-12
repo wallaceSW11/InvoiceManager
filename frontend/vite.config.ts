@@ -17,7 +17,7 @@ export default defineConfig({
       includeAssets: ['favicon.ico'],
       manifest: {
         name: 'Invoice Manager',
-        short_name: 'InvoiceManager',
+        short_name: 'Invoice Manager',
         description: 'Gerenciador de Faturas de Cartão de Crédito',
         theme_color: '#1976D2',
         background_color: '#ffffff',
@@ -144,9 +144,8 @@ export default defineConfig({
       'vue-router',
       'pinia',
       'vuetify',
-      '@mdi/font',
       'vue-i18n'
     ],
-    exclude: ['@wallacesw11/base-lib']
+    exclude: ['@wallacesw11/base-lib', '@mdi/font']
   }
 })

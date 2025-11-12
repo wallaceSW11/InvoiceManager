@@ -1,6 +1,6 @@
 export const InvoiceStatus = {
   PENDING: 'PENDING',
   COMPLETED: 'COMPLETED'
-} as const
+} as const;
 
-export type InvoiceStatus = typeof InvoiceStatus[keyof typeof InvoiceStatus]
+export type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];

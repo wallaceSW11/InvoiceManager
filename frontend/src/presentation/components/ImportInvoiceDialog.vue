@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useI18n } from "vue-i18n";
-import { useCardStore } from "@/presentation/stores/cardStore";
-import { useInvoiceStore } from "@/presentation/stores/invoiceStore";
-import { CSVParser } from "@/infrastructure/parsers";
-import { ModalBase, useGlobals } from "@wallacesw11/base-lib";
-import { useBreakpoint } from "@wallacesw11/base-lib/composables";
-import type { ModalAction } from "@wallacesw11/base-lib";
+import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useCardStore } from '@/presentation/stores/cardStore';
+import { useInvoiceStore } from '@/presentation/stores/invoiceStore';
+import { CSVParser } from '@/infrastructure/parsers';
+import { ModalBase, useGlobals } from '@wallacesw11/base-lib';
+import { useBreakpoint } from '@wallacesw11/base-lib/composables';
+import type { ModalAction } from '@wallacesw11/base-lib';
 
 const { t } = useI18n();
 const cardStore = useCardStore();
@@ -20,18 +20,26 @@ const emit = defineEmits<{
 }>();
 
 const dialog = defineModel<boolean>({ required: true });
-const selectedCardId = ref("");
-const dueDate = ref("");
+const selectedCardId = ref('');
+const dueDate = ref('');
 const file = ref<File | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
 const cards = computed(() => cardStore.cards);
 
+const autoSelectCard = () => {
+  if (cards.value.length === 1 && cards.value[0] && !selectedCardId.value) {
+    selectedCardId.value = cards.value[0].id;
+  }
+};
+
+cardStore.fetchCards().then(() => {
+  autoSelectCard();
+});
+
 const isValid = computed(() => {
-  return (
-    selectedCardId.value !== "" && dueDate.value !== "" && file.value !== null
-  );
+  return selectedCardId.value !== '' && dueDate.value !== '' && file.value !== null;
 });
 
 const modalActions = computed((): ModalAction[] => [
@@ -46,7 +54,9 @@ const modalActions = computed((): ModalAction[] => [
     text: t('common.cancel'),
     color: 'grey',
     variant: 'text',
-    handler: () => { dialog.value = false }
+    handler: () => {
+      dialog.value = false;
+    }
   }
 ]);
 
@@ -64,8 +74,7 @@ async function handleFileChange(files: File | File[]) {
 }
 
 async function importInvoice() {
-  if (!isValid.value || !selectedCardId.value || !dueDate.value || !file.value)
-    return;
+  if (!isValid.value || !selectedCardId.value || !dueDate.value || !file.value) return;
 
   loading.value = true;
   error.value = null;
@@ -81,12 +90,12 @@ async function importInvoice() {
     });
 
     if (existingInvoice) {
-      emit("imported", existingInvoice.id);
+      emit('imported', existingInvoice.id);
       setTimeout(() => {
         resetDialog();
       }, 100);
-      notify.info(t("invoice.import.alreadyExists"));
-      
+      notify.info(t('invoice.import.alreadyExists'));
+
       return;
     }
 
@@ -95,13 +104,13 @@ async function importInvoice() {
     const result = parser.parse(content);
 
     if (result.errors.length > 0) {
-      error.value = result.errors.join("\n");
+      error.value = result.errors.join('\n');
       loading.value = false;
       return;
     }
 
     if (result.transactions.length === 0) {
-      error.value = t("invoice.import.noTransactions");
+      error.value = t('invoice.import.noTransactions');
       loading.value = false;
       return;
     }
@@ -118,35 +127,33 @@ async function importInvoice() {
           amount: t.amount,
           splits: [],
           createdAt: now,
-          updatedAt: now,
+          updatedAt: now
         }))
-        .sort((a, b) => a.date.getTime() - b.date.getTime()),
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
     });
 
-    notify.success(t("invoice.import.messages.success"));
-    emit("imported", newInvoice.id);
+    notify.success(t('invoice.import.messages.success'));
+    emit('imported', newInvoice.id);
 
     setTimeout(() => {
       resetDialog();
     }, 100);
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err);
-    notify.error(t("invoice.import.messages.error"));
+    notify.error(t('invoice.import.messages.error'));
     loading.value = false;
   }
 }
 
 function resetDialog() {
-  selectedCardId.value = "";
-  dueDate.value = "";
+  selectedCardId.value = '';
+  dueDate.value = '';
   file.value = null;
   error.value = null;
   loading.value = false;
   dialog.value = false;
-  emit("close");
+  emit('close');
 }
-
-cardStore.fetchCards();
 </script>
 
 <template>
@@ -171,9 +178,9 @@ cardStore.fetchCards();
         <template #item="{ props, item }">
           <v-list-item v-bind="props">
             <template #append>
-              <span class="text-caption text-medium-emphasis"
-                >****{{ item.raw.lastFourDigits }}</span
-              >
+              <span class="text-caption text-medium-emphasis">
+                ****{{ item.raw.lastFourDigits }}
+              </span>
             </template>
           </v-list-item>
         </template>
@@ -200,14 +207,20 @@ cardStore.fetchCards();
         class="mb-4"
       />
 
-      <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+      <v-alert
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mb-4"
+      >
         <div class="text-body-2">
-          <strong>{{ t("invoice.import.formatInfo.title") }}</strong>
+          <strong>{{ t('invoice.import.formatInfo.title') }}</strong>
           <div class="mt-1">
-            {{ t("invoice.import.formatInfo.description") }}
+            {{ t('invoice.import.formatInfo.description') }}
           </div>
           <div class="mt-2 text-caption font-mono bg-surface pa-2 rounded">
-            Data;Descrição;Valor<br />
+            Data;Descrição;Valor
+            <br />
             11/09/2025;Teresopolis Shopping Center;121,89
           </div>
         </div>

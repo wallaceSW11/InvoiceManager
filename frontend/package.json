@@ -7,7 +7,12 @@
     "dev": "vite",
     "start": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "format": "prettier --write \"src/**/*.{ts,tsx,vue,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,vue,js,json}\""
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
@@ -25,11 +30,17 @@
     "@types/big.js": "^6.2.2",
     "@types/node": "^24.9.2",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vitest/coverage-v8": "^4.0.8",
+    "@vitest/ui": "^4.0.8",
+    "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
+    "happy-dom": "^20.0.10",
+    "prettier": "^3.6.2",
     "typescript": "~5.9.3",
     "vite": "^7.1.12",
     "vite-plugin-pwa": "^1.1.0",
     "vite-plugin-vuetify": "^2.1.2",
+    "vitest": "^4.0.8",
     "vue-tsc": "^3.1.2",
     "workbox-window": "^7.3.0"
   }

@@ -1,411 +1,415 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { navigateTo } from '@/presentation/router'
-import { useInvoiceStore } from '@/presentation/stores/invoiceStore'
-import { useParticipantStore } from '@/presentation/stores/participantStore'
-import { useCardStore } from '@/presentation/stores/cardStore'
-import { SplitMode, InvoiceStatus } from '@/core/domain/enums'
-import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities'
-import { MoneyCalculator } from '@/shared/utils/MoneyCalculator'
-import MoneyInput from '@/presentation/components/common/MoneyInput.vue'
-import { notify, confirm, ModalBase } from '@wallacesw11/base-lib'
-import { useBreakpoint } from '@wallacesw11/base-lib/composables'
-import type { ModalAction } from '@wallacesw11/base-lib/components'
+import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { navigateTo } from '@/presentation/router';
+import { useInvoiceStore } from '@/presentation/stores/invoiceStore';
+import { useParticipantStore } from '@/presentation/stores/participantStore';
+import { useCardStore } from '@/presentation/stores/cardStore';
+import { SplitMode, InvoiceStatus } from '@/core/domain/enums';
+import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities';
+import { MoneyCalculator } from '@/shared/utils/MoneyCalculator';
+import MoneyInput from '@/presentation/components/common/MoneyInput.vue';
+import { notify, confirm, ModalBase } from '@wallacesw11/base-lib';
+import { useBreakpoint } from '@wallacesw11/base-lib/composables';
+import type { ModalAction } from '@wallacesw11/base-lib/components';
 
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+const invoiceStore = useInvoiceStore();
+const participantStore = useParticipantStore();
+const cardStore = useCardStore();
+const { isMobileOrTablet } = useBreakpoint();
 
-const { t } = useI18n()
-const route = useRoute()
-const router = useRouter()
-const invoiceStore = useInvoiceStore()
-const participantStore = useParticipantStore()
-const cardStore = useCardStore()
-const { isMobileOrTablet } = useBreakpoint()
-
-const transactionSplits = ref<Record<string, Record<string, number>>>({})
-const manualValues = ref<Record<string, Record<string, boolean>>>({})
-const saving = ref(false)
-const showWhatsAppDialog = ref(false)
-const generatedMessages = ref<Record<string, string>>({})
-const copiedParticipantId = ref<string | null>(null)
-const searchQuery = ref('')
-const editableTransactionAmounts = ref<Record<string, boolean>>({})
-const tempTransactionAmounts = ref<Record<string, number>>({})
-const transactionAmountInputRefs = ref<Record<string, any>>({})
-const showAddTransactionDialog = ref(false)
+const transactionSplits = ref<Record<string, Record<string, number>>>({});
+const manualValues = ref<Record<string, Record<string, boolean>>>({});
+const saving = ref(false);
+const showWhatsAppDialog = ref(false);
+const generatedMessages = ref<Record<string, string>>({});
+const copiedParticipantId = ref<string | null>(null);
+const searchQuery = ref('');
+const editableTransactionAmounts = ref<Record<string, boolean>>({});
+const tempTransactionAmounts = ref<Record<string, number>>({});
+const transactionAmountInputRefs = ref<Record<string, any>>({});
+const showAddTransactionDialog = ref(false);
 const newTransaction = ref<{
-  date: string
-  description: string
-  amount: number
+  date: string;
+  description: string;
+  amount: number;
 }>({
   date: new Date().toISOString().split('T')[0]!,
   description: '',
   amount: 0
-})
+});
 
-const invoice = computed(() => invoiceStore.currentInvoice)
-const participants = computed(() => participantStore.participants)
+const invoice = computed(() => invoiceStore.currentInvoice);
+const participants = computed(() => participantStore.participants);
 
 const addTransactionActions = computed<ModalAction[]>(() => [
-  { 
-    text: t('common.cancel'), 
-    color: 'grey', 
-    handler: () => cancelAddTransaction() 
+  {
+    text: t('common.cancel'),
+    color: 'grey',
+    handler: () => cancelAddTransaction()
   },
-  { 
-    text: t('common.add'), 
-    color: 'primary', 
-    handler: () => addTransaction() 
+  {
+    text: t('common.add'),
+    color: 'primary',
+    handler: () => addTransaction()
   }
-])
+]);
 
 const whatsAppActions = computed<ModalAction[]>(() => [
-  { 
-    text: t('common.close'), 
-    color: 'grey', 
-    handler: () => closeWhatsAppDialog() 
+  {
+    text: t('common.close'),
+    color: 'grey',
+    handler: () => closeWhatsAppDialog()
   }
-])
+]);
 const card = computed(() => {
-  if (!invoice.value) return null
-  return cardStore.getCardById(invoice.value.cardId)
-})
+  if (!invoice.value) return null;
+  return cardStore.getCardById(invoice.value.cardId);
+});
 
-const isCompleted = computed(() => invoice.value?.status === InvoiceStatus.COMPLETED)
+const isCompleted = computed(() => invoice.value?.status === InvoiceStatus.COMPLETED);
 
 const filteredTransactions = computed(() => {
-  if (!invoice.value || !searchQuery.value) return invoice.value?.transactions || []
-  
-  const query = searchQuery.value.toLowerCase()
-  return invoice.value.transactions.filter(transaction => 
-    transaction.description.toLowerCase().includes(query) ||
-    new Date(transaction.date).toLocaleDateString('pt-BR').includes(query)
-  )
-})
+  if (!invoice.value || !searchQuery.value) return invoice.value?.transactions || [];
+
+  const query = searchQuery.value.toLowerCase();
+  return invoice.value.transactions.filter(
+    (transaction) =>
+      transaction.description.toLowerCase().includes(query) ||
+      new Date(transaction.date).toLocaleDateString('pt-BR').includes(query)
+  );
+});
 
 const totalsByParticipant = computed(() => {
-  const totals: Record<string, number> = {}
-  participants.value.forEach(participant => {
-    totals[participant.id] = 0
-  })
+  const totals: Record<string, number> = {};
+  participants.value.forEach((participant) => {
+    totals[participant.id] = 0;
+  });
 
   if (invoice.value) {
-    invoice.value.transactions.forEach(transaction => {
-      const splits = transactionSplits.value[transaction.id]
+    invoice.value.transactions.forEach((transaction) => {
+      const splits = transactionSplits.value[transaction.id];
       if (splits) {
-        participants.value.forEach(participant => {
-          const currentTotal = totals[participant.id] || 0
-          const splitValue = splits[participant.id] || 0
-          totals[participant.id] = MoneyCalculator.add(currentTotal, splitValue)
-        })
+        participants.value.forEach((participant) => {
+          const currentTotal = totals[participant.id] || 0;
+          const splitValue = splits[participant.id] || 0;
+          totals[participant.id] = MoneyCalculator.add(currentTotal, splitValue);
+        });
       }
-    })
+    });
   }
 
-  return totals
-})
+  return totals;
+});
 
 const grandTotal = computed(() => {
-  if (!invoice.value) return 0
-  const amounts = invoice.value.transactions.map(t => t.amount)
-  return MoneyCalculator.add(...amounts)
-})
+  if (!invoice.value) return 0;
+  const amounts = invoice.value.transactions.map((t) => t.amount);
+  return MoneyCalculator.add(...amounts);
+});
 
 const totalDifference = computed(() => {
-  if (!invoice.value) return 0
-  
+  if (!invoice.value) return 0;
+
   const allSplitsTotal = Object.values(totalsByParticipant.value).reduce(
     (acc, val) => MoneyCalculator.add(acc, val),
     0
-  )
-  
-  return MoneyCalculator.subtract(grandTotal.value, allSplitsTotal)
-})
+  );
+
+  return MoneyCalculator.subtract(grandTotal.value, allSplitsTotal);
+});
 
 function initializeTransactionSplits() {
-  if (!invoice.value) return
+  if (!invoice.value) return;
 
-  invoice.value.transactions.forEach(transaction => {
+  invoice.value.transactions.forEach((transaction) => {
     if (!transactionSplits.value[transaction.id]) {
-      transactionSplits.value[transaction.id] = {}
+      transactionSplits.value[transaction.id] = {};
     }
 
-    const splits = transactionSplits.value[transaction.id]
+    const splits = transactionSplits.value[transaction.id];
     if (splits) {
-      transaction.splits.forEach(split => {
-        splits[split.participantId] = split.amount
-      })
+      transaction.splits.forEach((split) => {
+        splits[split.participantId] = split.amount;
+      });
     }
-  })
+  });
 }
 
 function getSplitValue(transactionId: string, participantId: string): number {
-  return transactionSplits.value[transactionId]?.[participantId] || 0
+  return transactionSplits.value[transactionId]?.[participantId] || 0;
 }
 
 function updateSplitValue(transactionId: string, participantId: string, value: number) {
   if (!transactionSplits.value[transactionId]) {
-    transactionSplits.value[transactionId] = {}
+    transactionSplits.value[transactionId] = {};
   }
   if (!manualValues.value[transactionId]) {
-    manualValues.value[transactionId] = {}
+    manualValues.value[transactionId] = {};
   }
-  
-  transactionSplits.value[transactionId][participantId] = Number(value.toFixed(2))
-  manualValues.value[transactionId][participantId] = true
+
+  transactionSplits.value[transactionId][participantId] = Number(value.toFixed(2));
+  manualValues.value[transactionId][participantId] = true;
 }
 
 function isManualValue(transactionId: string, participantId: string): boolean {
-  return manualValues.value[transactionId]?.[participantId] || false
+  return manualValues.value[transactionId]?.[participantId] || false;
 }
 
 function autoSplitTransaction(transaction: Transaction) {
-  if (participants.value.length === 0) return
+  if (participants.value.length === 0) return;
 
-  const participantsWithoutValue = participants.value.filter(p => {
-    const value = getSplitValue(transaction.id, p.id)
-    const isManual = isManualValue(transaction.id, p.id)
-    return value === 0 && !isManual
-  })
-  
-  if (participantsWithoutValue.length === 0) return
+  const participantsWithoutValue = participants.value.filter((p) => {
+    const value = getSplitValue(transaction.id, p.id);
+    const isManual = isManualValue(transaction.id, p.id);
+    return value === 0 && !isManual;
+  });
 
-  const currentTotal = getTransactionTotal(transaction)
-  const remaining = MoneyCalculator.subtract(transaction.amount, currentTotal)
-  
-  if (remaining === 0) return
+  if (participantsWithoutValue.length === 0) return;
+
+  const currentTotal = getTransactionTotal(transaction);
+  const remaining = MoneyCalculator.subtract(transaction.amount, currentTotal);
+
+  if (remaining === 0) return;
 
   if (!transactionSplits.value[transaction.id]) {
-    transactionSplits.value[transaction.id] = {}
+    transactionSplits.value[transaction.id] = {};
   }
   if (!manualValues.value[transaction.id]) {
-    manualValues.value[transaction.id] = {}
+    manualValues.value[transaction.id] = {};
   }
 
-  const splits = transactionSplits.value[transaction.id]
-  const manuals = manualValues.value[transaction.id]
+  const splits = transactionSplits.value[transaction.id];
+  const manuals = manualValues.value[transaction.id];
   if (splits && manuals) {
-    const splitValues = MoneyCalculator.splitEqually(remaining, participantsWithoutValue.length)
+    const splitValues = MoneyCalculator.splitEqually(remaining, participantsWithoutValue.length);
     participantsWithoutValue.forEach((participant, index) => {
-      splits[participant.id] = splitValues[index] || 0
-      manuals[participant.id] = false
-    })
+      splits[participant.id] = splitValues[index] || 0;
+      manuals[participant.id] = false;
+    });
   }
 }
 
 function removeAllSplits(transaction: Transaction) {
-  if (!transactionSplits.value[transaction.id]) return
+  if (!transactionSplits.value[transaction.id]) return;
 
-  const splits = transactionSplits.value[transaction.id]
-  const manuals = manualValues.value[transaction.id]
-  
-  participants.value.forEach(participant => {
+  const splits = transactionSplits.value[transaction.id];
+  const manuals = manualValues.value[transaction.id];
+
+  participants.value.forEach((participant) => {
     if (!isManualValue(transaction.id, participant.id)) {
       if (splits) {
-        splits[participant.id] = 0
+        splits[participant.id] = 0;
       }
       if (manuals) {
-        delete manuals[participant.id]
+        delete manuals[participant.id];
       }
     }
-  })
+  });
 }
 
 function canDivideAll(transaction: Transaction): boolean {
-  if (participants.value.length === 0) return false
-  
-  return participants.value.some(p => {
-    const value = getSplitValue(transaction.id, p.id)
-    const isManual = isManualValue(transaction.id, p.id)
-    return value === 0 && !isManual
-  })
+  if (participants.value.length === 0) return false;
+
+  return participants.value.some((p) => {
+    const value = getSplitValue(transaction.id, p.id);
+    const isManual = isManualValue(transaction.id, p.id);
+    return value === 0 && !isManual;
+  });
 }
 
 function canRemoveAll(transaction: Transaction): boolean {
-  if (!transactionSplits.value[transaction.id]) return false
-  
-  return participants.value.some(p => {
-    const value = getSplitValue(transaction.id, p.id)
-    const isManual = isManualValue(transaction.id, p.id)
-    return value !== 0 && !isManual
-  })
+  if (!transactionSplits.value[transaction.id]) return false;
+
+  return participants.value.some((p) => {
+    const value = getSplitValue(transaction.id, p.id);
+    const isManual = isManualValue(transaction.id, p.id);
+    return value !== 0 && !isManual;
+  });
 }
 
 function toggleParticipantSplit(transaction: Transaction, participant: Participant) {
-  const currentValue = getSplitValue(transaction.id, participant.id)
-  
+  const currentValue = getSplitValue(transaction.id, participant.id);
+
   if (currentValue !== 0) {
     if (!isManualValue(transaction.id, participant.id)) {
-      updateSplitValueProgrammatically(transaction.id, participant.id, 0)
-      const manuals = manualValues.value[transaction.id]
+      updateSplitValueProgrammatically(transaction.id, participant.id, 0);
+      const manuals = manualValues.value[transaction.id];
       if (manuals) {
-        delete manuals[participant.id]
+        delete manuals[participant.id];
       }
-      
-      recalculateAutomaticSplits(transaction)
+
+      recalculateAutomaticSplits(transaction);
     }
   } else {
-    updateSplitValueProgrammatically(transaction.id, participant.id, 1)
-    
-    recalculateAutomaticSplits(transaction)
+    updateSplitValueProgrammatically(transaction.id, participant.id, 1);
+
+    recalculateAutomaticSplits(transaction);
   }
 }
 
 function recalculateAutomaticSplits(transaction: Transaction) {
-  let manualTotal = 0
-  participants.value.forEach(p => {
+  let manualTotal = 0;
+  participants.value.forEach((p) => {
     if (isManualValue(transaction.id, p.id)) {
-      manualTotal = MoneyCalculator.add(manualTotal, getSplitValue(transaction.id, p.id))
+      manualTotal = MoneyCalculator.add(manualTotal, getSplitValue(transaction.id, p.id));
     }
-  })
-  
-  const remaining = MoneyCalculator.subtract(transaction.amount, manualTotal)
-  
-  if (remaining === 0) return
-  
-  const automaticParticipants = participants.value.filter(p => {
-    const value = getSplitValue(transaction.id, p.id)
-    const isManual = isManualValue(transaction.id, p.id)
-    return value !== 0 && !isManual
-  })
-  
-  if (automaticParticipants.length === 0) return
-  
-  const splitValues = MoneyCalculator.splitEqually(remaining, automaticParticipants.length)
-  
+  });
+
+  const remaining = MoneyCalculator.subtract(transaction.amount, manualTotal);
+
+  if (remaining === 0) return;
+
+  const automaticParticipants = participants.value.filter((p) => {
+    const value = getSplitValue(transaction.id, p.id);
+    const isManual = isManualValue(transaction.id, p.id);
+    return value !== 0 && !isManual;
+  });
+
+  if (automaticParticipants.length === 0) return;
+
+  const splitValues = MoneyCalculator.splitEqually(remaining, automaticParticipants.length);
+
   automaticParticipants.forEach((p, index) => {
-    updateSplitValueProgrammatically(transaction.id, p.id, splitValues[index] || 0)
-  })
+    updateSplitValueProgrammatically(transaction.id, p.id, splitValues[index] || 0);
+  });
 }
 
-function updateSplitValueProgrammatically(transactionId: string, participantId: string, value: number) {
+function updateSplitValueProgrammatically(
+  transactionId: string,
+  participantId: string,
+  value: number
+) {
   if (!transactionSplits.value[transactionId]) {
-    transactionSplits.value[transactionId] = {}
+    transactionSplits.value[transactionId] = {};
   }
   if (!manualValues.value[transactionId]) {
-    manualValues.value[transactionId] = {}
+    manualValues.value[transactionId] = {};
   }
-  
-  transactionSplits.value[transactionId][participantId] = Number(value.toFixed(2))
-  manualValues.value[transactionId][participantId] = false
+
+  transactionSplits.value[transactionId][participantId] = Number(value.toFixed(2));
+  manualValues.value[transactionId][participantId] = false;
 }
 
 function getTransactionDifference(transaction: Transaction): number {
-  const total = getTransactionTotal(transaction)
-  return MoneyCalculator.subtract(transaction.amount, total)
+  const total = getTransactionTotal(transaction);
+  return MoneyCalculator.subtract(transaction.amount, total);
 }
 
 function getTransactionTotal(transaction: Transaction): number {
-  const splits = transactionSplits.value[transaction.id] || {}
-  return MoneyCalculator.add(...Object.values(splits))
+  const splits = transactionSplits.value[transaction.id] || {};
+  return MoneyCalculator.add(...Object.values(splits));
 }
 
 function isTransactionValid(transaction: Transaction): boolean {
-  const total = getTransactionTotal(transaction)
-  const difference = MoneyCalculator.subtract(transaction.amount, total)
-  return MoneyCalculator.isNegligible(difference)
+  const total = getTransactionTotal(transaction);
+  const difference = MoneyCalculator.subtract(transaction.amount, total);
+  return MoneyCalculator.isNegligible(difference);
 }
 
 function areAllTransactionsValid(): boolean {
-  if (!invoice.value) return false
-  return invoice.value.transactions.every(t => isTransactionValid(t))
+  if (!invoice.value) return false;
+  return invoice.value.transactions.every((t) => isTransactionValid(t));
 }
 
 function toggleEditTransactionAmount(transactionId: string) {
-  const isEditable = editableTransactionAmounts.value[transactionId]
-  
+  const isEditable = editableTransactionAmounts.value[transactionId];
+
   if (!isEditable) {
-    editableTransactionAmounts.value[transactionId] = true
-    const transaction = invoice.value?.transactions.find(t => t.id === transactionId)
+    editableTransactionAmounts.value[transactionId] = true;
+    const transaction = invoice.value?.transactions.find((t) => t.id === transactionId);
     if (transaction) {
-      tempTransactionAmounts.value[transactionId] = transaction.amount
+      tempTransactionAmounts.value[transactionId] = transaction.amount;
     }
-    
+
     setTimeout(() => {
-      const inputRef = transactionAmountInputRefs.value[transactionId]
+      const inputRef = transactionAmountInputRefs.value[transactionId];
       if (inputRef) {
-        let input = inputRef.$el?.querySelector('input')
-        
+        let input = inputRef.$el?.querySelector('input');
+
         if (!input && inputRef.$el) {
-          input = inputRef.$el.tagName === 'INPUT' ? inputRef.$el : null
+          input = inputRef.$el.tagName === 'INPUT' ? inputRef.$el : null;
         }
-        
+
         if (input) {
-          input.focus()
+          input.focus();
           setTimeout(() => {
             if (input) {
-              input.setSelectionRange(0, input.value.length)
+              input.setSelectionRange(0, input.value.length);
             }
-          }, 50)
+          }, 50);
         }
       }
-    }, 100)
+    }, 100);
   } else {
-    editableTransactionAmounts.value[transactionId] = false
-    delete tempTransactionAmounts.value[transactionId]
+    editableTransactionAmounts.value[transactionId] = false;
+    delete tempTransactionAmounts.value[transactionId];
   }
 }
 
 function getTransactionAmount(transactionId: string): number {
   if (editableTransactionAmounts.value[transactionId]) {
-    return tempTransactionAmounts.value[transactionId] || 0
+    return tempTransactionAmounts.value[transactionId] || 0;
   }
-  const transaction = invoice.value?.transactions.find(t => t.id === transactionId)
-  return transaction?.amount || 0
+  const transaction = invoice.value?.transactions.find((t) => t.id === transactionId);
+  return transaction?.amount || 0;
 }
 
 function updateTransactionAmount(transactionId: string, newAmount: number) {
-  tempTransactionAmounts.value[transactionId] = newAmount
+  tempTransactionAmounts.value[transactionId] = newAmount;
 }
 
 async function saveTransactionAmount(transactionId: string) {
-  if (!invoice.value) return
-  
-  const newAmount = tempTransactionAmounts.value[transactionId]
+  if (!invoice.value) return;
+
+  const newAmount = tempTransactionAmounts.value[transactionId];
   if (newAmount === undefined || newAmount <= 0) {
-    notify.error(t('invoice.split.invalidAmount'))
-    return
+    notify.error(t('invoice.split.invalidAmount'));
+    return;
   }
-  
-  const transaction = invoice.value.transactions.find(t => t.id === transactionId)
-  if (!transaction) return
-  
+
+  const transaction = invoice.value.transactions.find((t) => t.id === transactionId);
+  if (!transaction) return;
+
   if (transactionSplits.value[transactionId]) {
-    participants.value.forEach(participant => {
+    participants.value.forEach((participant) => {
       if (transactionSplits.value[transactionId]) {
-        transactionSplits.value[transactionId][participant.id] = 0
+        transactionSplits.value[transactionId][participant.id] = 0;
       }
-    })
+    });
   }
-  
+
   if (manualValues.value[transactionId]) {
-    manualValues.value[transactionId] = {}
+    manualValues.value[transactionId] = {};
   }
-  
-  transaction.amount = newAmount
-  editableTransactionAmounts.value[transactionId] = false
-  delete tempTransactionAmounts.value[transactionId]
-  
-  notify.success(t('invoice.split.amountUpdated'))
+
+  transaction.amount = newAmount;
+  editableTransactionAmounts.value[transactionId] = false;
+  delete tempTransactionAmounts.value[transactionId];
+
+  notify.success(t('invoice.split.amountUpdated'));
 }
 
 function cancelEditTransactionAmount(transactionId: string) {
-  editableTransactionAmounts.value[transactionId] = false
-  delete tempTransactionAmounts.value[transactionId]
+  editableTransactionAmounts.value[transactionId] = false;
+  delete tempTransactionAmounts.value[transactionId];
 }
 
 function isTransactionAmountEditable(transactionId: string): boolean {
-  return editableTransactionAmounts.value[transactionId] || false
+  return editableTransactionAmounts.value[transactionId] || false;
 }
 
 function handleTransactionAmountKeydown(event: KeyboardEvent, transactionId: string) {
   if (event.key === 'Enter') {
-    event.preventDefault()
-    saveTransactionAmount(transactionId)
+    event.preventDefault();
+    saveTransactionAmount(transactionId);
   } else if (event.key === 'Escape') {
-    event.preventDefault()
-    cancelEditTransactionAmount(transactionId)
+    event.preventDefault();
+    cancelEditTransactionAmount(transactionId);
   }
 }
 
@@ -413,28 +417,28 @@ async function confirmDeleteTransaction(transactionId: string) {
   const confirmed = await confirm.show(
     t('invoice.split.confirmDelete'),
     t('invoice.split.confirmDeleteMessage')
-  )
-  
+  );
+
   if (confirmed) {
-    deleteTransaction(transactionId)
+    deleteTransaction(transactionId);
   }
 }
 
 function deleteTransaction(transactionId: string) {
-  if (!invoice.value) return
-  
-  const transactionIndex = invoice.value.transactions.findIndex(t => t.id === transactionId)
-  
+  if (!invoice.value) return;
+
+  const transactionIndex = invoice.value.transactions.findIndex((t) => t.id === transactionId);
+
   if (transactionIndex !== -1) {
-    invoice.value.transactions.splice(transactionIndex, 1)
+    invoice.value.transactions.splice(transactionIndex, 1);
   }
-  
-  delete transactionSplits.value[transactionId]
-  delete manualValues.value[transactionId]
-  delete editableTransactionAmounts.value[transactionId]
-  delete tempTransactionAmounts.value[transactionId]
-  
-  notify.success(t('invoice.transactionDeleted'))
+
+  delete transactionSplits.value[transactionId];
+  delete manualValues.value[transactionId];
+  delete editableTransactionAmounts.value[transactionId];
+  delete tempTransactionAmounts.value[transactionId];
+
+  notify.success(t('invoice.transactionDeleted'));
 }
 
 function openAddTransactionDialog() {
@@ -442,29 +446,29 @@ function openAddTransactionDialog() {
     date: new Date().toISOString().split('T')[0]!,
     description: '',
     amount: 0
-  }
-  showAddTransactionDialog.value = true
+  };
+  showAddTransactionDialog.value = true;
 }
 
 function cancelAddTransaction() {
-  showAddTransactionDialog.value = false
+  showAddTransactionDialog.value = false;
   newTransaction.value = {
     date: new Date().toISOString().split('T')[0]!,
     description: '',
     amount: 0
-  }
+  };
 }
 
 async function addTransaction() {
-  if (!invoice.value) return
-  
+  if (!invoice.value) return;
+
   if (!newTransaction.value.description.trim()) {
-    notify.error(t('invoice.description') + ' é obrigatória')
-    return
+    notify.error(t('invoice.description') + ' é obrigatória');
+    return;
   }
-  
-  const newId = `transaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  
+
+  const newId = `transaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
   const transaction: Transaction = {
     id: newId,
     date: new Date(newTransaction.value.date),
@@ -473,238 +477,275 @@ async function addTransaction() {
     splits: [],
     createdAt: new Date(),
     updatedAt: new Date()
-  }
-  
-  invoice.value.transactions.push(transaction)
-  transactionSplits.value[newId] = {}
-  manualValues.value[newId] = {}
-  
-  showAddTransactionDialog.value = false
+  };
+
+  invoice.value.transactions.push(transaction);
+  transactionSplits.value[newId] = {};
+  manualValues.value[newId] = {};
+
+  showAddTransactionDialog.value = false;
   newTransaction.value = {
     date: new Date().toISOString().split('T')[0]!,
     description: '',
     amount: 0
-  }
-  
-  notify.success(t('invoice.transactionAdded'))
+  };
+
+  notify.success(t('invoice.transactionAdded'));
 }
 
 async function saveInvoice() {
-  if (!invoice.value) return
+  if (!invoice.value) return;
 
-  saving.value = true
+  saving.value = true;
   try {
-    const updatedTransactions = invoice.value.transactions.map(transaction => ({
+    const updatedTransactions = invoice.value.transactions.map((transaction) => ({
       ...transaction,
       splits: participants.value
-        .map(participant => {
-          const amount = getSplitValue(transaction.id, participant.id)
+        .map((participant) => {
+          const amount = getSplitValue(transaction.id, participant.id);
           if (amount !== 0) {
             return {
               participantId: participant.id,
               amount,
               mode: SplitMode.MANUAL
-            } as TransactionSplit
+            } as TransactionSplit;
           }
-          return null
+          return null;
         })
         .filter((split): split is TransactionSplit => split !== null)
-    }))
+    }));
 
     await invoiceStore.updateInvoice(invoice.value.id, {
       transactions: updatedTransactions
-    })
-    
-    notify.success(t('invoice.saved'))
+    });
+
+    notify.success(t('invoice.saved'));
   } catch (error) {
-    console.error('Error saving invoice:', error)
-    notify.error(t('invoice.saveError'))
+    console.error('Error saving invoice:', error);
+    notify.error(t('invoice.saveError'));
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 
 async function saveAndClose() {
-  await saveInvoice()
-  await navigateTo(router, '/invoices')
+  await saveInvoice();
+  await navigateTo(router, '/invoices');
 }
 
 async function completeInvoice() {
-  if (!invoice.value || !areAllTransactionsValid()) return
+  if (!invoice.value || !areAllTransactionsValid()) return;
 
   try {
-    await saveInvoice()
-    await invoiceStore.completeInvoice(invoice.value.id)
+    await saveInvoice();
+    await invoiceStore.completeInvoice(invoice.value.id);
   } catch (error) {
-    console.error('Error completing invoice:', error)
+    console.error('Error completing invoice:', error);
   }
 }
 
 async function reopenInvoice() {
-  if (!invoice.value) return
+  if (!invoice.value) return;
 
   try {
-    await invoiceStore.reopenInvoice(invoice.value.id)
+    await invoiceStore.reopenInvoice(invoice.value.id);
   } catch (error) {
-    console.error('Error reopening invoice:', error)
+    console.error('Error reopening invoice:', error);
   }
 }
 
 function generateWhatsAppMessages() {
-  if (!invoice.value || !card.value) return
+  if (!invoice.value || !card.value) return;
 
-  generatedMessages.value = {}
+  generatedMessages.value = {};
 
-  participants.value.forEach(participant => {
-    const total = totalsByParticipant.value[participant.id] || 0
-    if (total === 0) return
+  participants.value.forEach((participant) => {
+    const total = totalsByParticipant.value[participant.id] || 0;
+    if (total === 0) return;
 
-    const cardName = `${card.value?.nickname} (*${card.value?.lastFourDigits})`
-    const dueDate = new Date(invoice.value!.dueDate).toLocaleDateString('pt-BR')
-    
-    let message = `Olá ${participant.name}! 👋\n\n`
-    message += `Segue sua parte da fatura do cartão ${cardName}:\n`
-    message += `Vencimento: ${dueDate}\n\n`
-    message += `📋 *Suas compras:*\n`
+    const cardName = `${card.value?.nickname} (*${card.value?.lastFourDigits})`;
+    const dueDate = new Date(invoice.value!.dueDate).toLocaleDateString('pt-BR');
 
-    invoice.value!.transactions.forEach(transaction => {
-      const splitAmount = getSplitValue(transaction.id, participant.id)
+    let message = `Olá ${participant.name}! 👋\n\n`;
+    message += `Segue sua parte da fatura do cartão ${cardName}:\n`;
+    message += `Vencimento: ${dueDate}\n\n`;
+    message += `📋 *Suas compras:*\n`;
+
+    invoice.value!.transactions.forEach((transaction) => {
+      const splitAmount = getSplitValue(transaction.id, participant.id);
       if (splitAmount !== 0) {
-        const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR')
-        const amountStr = splitAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-        message += `• ${dateStr} - ${transaction.description}: ${amountStr}\n`
+        const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR');
+        const amountStr = splitAmount.toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        });
+        message += `• ${dateStr} - ${transaction.description}: ${amountStr}\n`;
       }
-    })
+    });
 
-    const totalStr = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-    message += `\n💰 *Total: ${totalStr}*`
+    const totalStr = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    message += `\n💰 *Total: ${totalStr}*`;
 
-    generatedMessages.value[participant.id] = message
-  })
+    generatedMessages.value[participant.id] = message;
+  });
 
-  showWhatsAppDialog.value = true
+  showWhatsAppDialog.value = true;
 }
 
 function closeWhatsAppDialog() {
-  showWhatsAppDialog.value = false
+  showWhatsAppDialog.value = false;
 }
 
 async function copyToClipboard(participantId: string) {
-  const message = generatedMessages.value[participantId]
-  if (!message) return
+  const message = generatedMessages.value[participantId];
+  if (!message) return;
 
   try {
-    await navigator.clipboard.writeText(message)
-    copiedParticipantId.value = participantId
+    await navigator.clipboard.writeText(message);
+    copiedParticipantId.value = participantId;
     setTimeout(() => {
-      copiedParticipantId.value = null
-    }, 2000)
+      copiedParticipantId.value = null;
+    }, 2000);
   } catch (error) {
-    console.error('Error copying to clipboard:', error)
+    console.error('Error copying to clipboard:', error);
   }
 }
 
 async function copyAllMessages() {
-  if (!invoice.value || !card.value) return
+  if (!invoice.value || !card.value) return;
 
-  const cardName = `${card.value.nickname} (*${card.value.lastFourDigits})`
-  const dueDate = new Date(invoice.value.dueDate).toLocaleDateString('pt-BR')
-  
-  let fullMessage = `📄 RESUMO COMPLETO DA FATURA\n`
-  fullMessage += `Cartão: ${cardName}\n`
-  fullMessage += `Vencimento: ${dueDate}\n`
-  fullMessage += `${'='.repeat(50)}\n\n`
+  const cardName = `${card.value.nickname} (*${card.value.lastFourDigits})`;
+  const dueDate = new Date(invoice.value.dueDate).toLocaleDateString('pt-BR');
 
-  const participantsWithValues = participants.value.filter(p => (totalsByParticipant.value[p.id] || 0) !== 0)
-  
+  let fullMessage = `📄 RESUMO COMPLETO DA FATURA\n`;
+  fullMessage += `Cartão: ${cardName}\n`;
+  fullMessage += `Vencimento: ${dueDate}\n`;
+  fullMessage += `${'='.repeat(50)}\n\n`;
+
+  const participantsWithValues = participants.value.filter(
+    (p) => (totalsByParticipant.value[p.id] || 0) !== 0
+  );
+
   participantsWithValues.forEach((participant, index) => {
-    const total = totalsByParticipant.value[participant.id] || 0
-    const totalStr = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-    
-    fullMessage += `👤 ${participant.name.toUpperCase()}\n`
-    fullMessage += `${'-'.repeat(50)}\n`
-    
-    invoice.value!.transactions.forEach(transaction => {
-      const splitAmount = getSplitValue(transaction.id, participant.id)
-      if (splitAmount !== 0) {
-        const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR')
-        const amountStr = splitAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-        fullMessage += `  • ${dateStr} - ${transaction.description}: ${amountStr}\n`
-      }
-    })
-    
-    fullMessage += `\n  💰 TOTAL: ${totalStr}\n`
-    
-    if (index < participantsWithValues.length - 1) {
-      fullMessage += `\n${'='.repeat(50)}\n\n`
-    }
-  })
+    const total = totalsByParticipant.value[participant.id] || 0;
+    const totalStr = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const grandTotalStr = grandTotal.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  fullMessage += `\n${'='.repeat(50)}\n`
-  fullMessage += `💵 TOTAL GERAL DA FATURA: ${grandTotalStr}`
+    fullMessage += `👤 ${participant.name.toUpperCase()}\n`;
+    fullMessage += `${'-'.repeat(50)}\n`;
+
+    invoice.value!.transactions.forEach((transaction) => {
+      const splitAmount = getSplitValue(transaction.id, participant.id);
+      if (splitAmount !== 0) {
+        const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR');
+        const amountStr = splitAmount.toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        });
+        fullMessage += `  • ${dateStr} - ${transaction.description}: ${amountStr}\n`;
+      }
+    });
+
+    fullMessage += `\n  💰 TOTAL: ${totalStr}\n`;
+
+    if (index < participantsWithValues.length - 1) {
+      fullMessage += `\n${'='.repeat(50)}\n\n`;
+    }
+  });
+
+  const grandTotalStr = grandTotal.value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
+  fullMessage += `\n${'='.repeat(50)}\n`;
+  fullMessage += `💵 TOTAL GERAL DA FATURA: ${grandTotalStr}`;
 
   try {
-    await navigator.clipboard.writeText(fullMessage)
-    copiedParticipantId.value = 'all'
+    await navigator.clipboard.writeText(fullMessage);
+    copiedParticipantId.value = 'all';
     setTimeout(() => {
-      copiedParticipantId.value = null
-    }, 2000)
+      copiedParticipantId.value = null;
+    }, 2000);
   } catch (error) {
-    console.error('Error copying all messages to clipboard:', error)
+    console.error('Error copying all messages to clipboard:', error);
   }
 }
 
 function openWhatsApp(participantId: string) {
-  const participant = participants.value.find(p => p.id === participantId)
-  const message = generatedMessages.value[participantId]
-  
-  if (!participant || !message) return
+  const participant = participants.value.find((p) => p.id === participantId);
+  const message = generatedMessages.value[participantId];
 
-  const phone = '+55' + participant.phoneNumber.replace(/\D/g, '')
-  const encodedMessage = encodeURIComponent(message)
-  const url = `https://wa.me/${phone}?text=${encodedMessage}`
-  
-  window.open(url, '_blank')
+  if (!participant || !message) return;
+
+  const phone = '+55' + participant.phoneNumber.replace(/\D/g, '');
+  const encodedMessage = encodeURIComponent(message);
+  const url = `https://wa.me/${phone}?text=${encodedMessage}`;
+
+  window.open(url, '_blank');
 }
 
 onMounted(async () => {
-  const id = route.params.id as string
+  const id = route.params.id as string;
   if (id) {
     await Promise.all([
       invoiceStore.fetchInvoiceById(id),
       participantStore.fetchParticipants(),
       cardStore.fetchCards()
-    ])
-    initializeTransactionSplits()
+    ]);
+    initializeTransactionSplits();
   }
-})
+});
 </script>
 
 <template>
-  <div v-if="invoice" class="d-flex flex-column pa-4">
+  <div
+    v-if="invoice"
+    class="d-flex flex-column pa-4"
+  >
     <v-card class="mb-2">
       <v-card-text class="py-3">
-        <v-row dense align="center">
-          <v-col cols="12" sm="6" md="3" lg="2">
+        <v-row
+          dense
+          align="center"
+        >
+          <v-col
+            cols="12"
+            sm="6"
+            md="3"
+            lg="2"
+          >
             <div class="text-caption text-medium-emphasis">{{ t('invoice.card') }}</div>
             <div class="text-body-2 font-weight-medium">
               {{ card?.nickname }} (*{{ card?.lastFourDigits }})
             </div>
           </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2">
+          <v-col
+            cols="12"
+            sm="6"
+            md="3"
+            lg="2"
+          >
             <div class="text-caption text-medium-emphasis">{{ t('invoice.dueDate') }}</div>
             <div class="text-body-2 font-weight-medium">
               {{ new Date(invoice.dueDate).toLocaleDateString('pt-BR') }}
             </div>
           </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2">
+          <v-col
+            cols="12"
+            sm="6"
+            md="3"
+            lg="2"
+          >
             <div class="text-caption text-medium-emphasis">{{ t('invoice.total') }}</div>
             <div class="text-h6 font-weight-bold">
               {{ grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
             </div>
           </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2">
+          <v-col
+            cols="12"
+            sm="6"
+            md="3"
+            lg="2"
+          >
             <div class="text-caption text-medium-emphasis">{{ t('invoice.status') }}</div>
             <v-chip
               :color="isCompleted ? 'success' : 'warning'"
@@ -713,7 +754,12 @@ onMounted(async () => {
               {{ t(`invoice.statuses.${invoice.status.toLowerCase()}`) }}
             </v-chip>
           </v-col>
-          <v-col cols="12" md="12" lg="4" class="d-flex justify-end flex-wrap gap-2">
+          <v-col
+            cols="12"
+            md="12"
+            lg="4"
+            class="d-flex justify-end flex-wrap gap-2"
+          >
             <v-btn
               v-if="isCompleted"
               color="warning"
@@ -779,47 +825,162 @@ onMounted(async () => {
 
     <v-card class="mb-2">
       <v-card-text class="pa-0">
-        <v-table density="compact" fixed-header height="calc(100dvh - 400px)">
-            <thead>
-              <tr>
-                <th class="text-center" style="width: 50px">
+        <v-table
+          density="compact"
+          fixed-header
+          height="calc(100dvh - 320px)"
+        >
+          <thead>
+            <tr>
+              <th
+                class="text-center"
+                style="width: 50px"
+              >
+                <v-tooltip location="top">
+                  <template #activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon="mdi-plus"
+                      size="x-small"
+                      variant="text"
+                      color="success"
+                      :disabled="isCompleted"
+                      @click="openAddTransactionDialog"
+                    />
+                  </template>
+                  <span>{{ t('invoice.addTransaction') }}</span>
+                </v-tooltip>
+              </th>
+              <th
+                class="text-left"
+                style="min-width: 100px"
+              >
+                {{ t('invoice.date') }}
+              </th>
+              <th
+                class="text-left"
+                style="min-width: 200px"
+              >
+                {{ t('invoice.description') }}
+              </th>
+              <th
+                class="text-right"
+                style="min-width: 120px"
+              >
+                {{ t('invoice.total') }}
+              </th>
+              <th
+                class="text-right"
+                style="min-width: 120px"
+              >
+                {{ t('invoice.split.difference') }}
+              </th>
+              <th
+                class="text-center"
+                style="width: 60px"
+              ></th>
+              <th
+                v-for="participant in participants"
+                :key="participant.id"
+                class="text-left"
+                style="min-width: 200px"
+              >
+                {{ participant.name }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="transaction in filteredTransactions"
+              :key="transaction.id"
+              :class="{ 'bg-error-lighten-4': !isTransactionValid(transaction) }"
+            >
+              <td class="text-center">
+                <v-tooltip location="top">
+                  <template #activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon="mdi-close"
+                      size="x-small"
+                      variant="text"
+                      color="error"
+                      :disabled="isCompleted"
+                      @click="confirmDeleteTransaction(transaction.id)"
+                    />
+                  </template>
+                  <span>{{ t('invoice.split.deleteTransaction') }}</span>
+                </v-tooltip>
+              </td>
+              <td class="text-no-wrap">
+                {{ new Date(transaction.date).toLocaleDateString('pt-BR') }}
+              </td>
+              <td
+                class="text-truncate"
+                style="max-width: 200px"
+              >
+                <v-tooltip location="top">
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{ transaction.description }}</span>
+                  </template>
+                  <span>{{ transaction.description }}</span>
+                </v-tooltip>
+              </td>
+              <td class="text-right font-weight-bold text-no-wrap">
+                <div
+                  v-if="!isTransactionAmountEditable(transaction.id)"
+                  class="d-flex align-center justify-end gap-1"
+                >
+                  <span>
+                    {{
+                      transaction.amount.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      })
+                    }}
+                  </span>
                   <v-tooltip location="top">
                     <template #activator="{ props }">
                       <v-btn
                         v-bind="props"
-                        icon="mdi-plus"
+                        icon="mdi-pencil"
+                        size="x-small"
+                        variant="text"
+                        :disabled="isCompleted"
+                        @click="toggleEditTransactionAmount(transaction.id)"
+                      />
+                    </template>
+                    <span>{{ t('invoice.split.editAmount') }}</span>
+                  </v-tooltip>
+                </div>
+                <div
+                  v-else
+                  class="d-flex align-center justify-end gap-1"
+                >
+                  <MoneyInput
+                    :ref="(el) => (transactionAmountInputRefs[transaction.id] = el)"
+                    :model-value="getTransactionAmount(transaction.id)"
+                    @update:model-value="(val) => updateTransactionAmount(transaction.id, val)"
+                    @keydown="
+                      (e: KeyboardEvent) => handleTransactionAmountKeydown(e, transaction.id)
+                    "
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    style="width: 130px"
+                  />
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-check"
                         size="x-small"
                         variant="text"
                         color="success"
-                        :disabled="isCompleted"
-                        @click="openAddTransactionDialog"
+                        @click="saveTransactionAmount(transaction.id)"
                       />
                     </template>
-                    <span>{{ t('invoice.addTransaction') }}</span>
+                    <span>{{ t('invoice.split.saveAmount') }}</span>
                   </v-tooltip>
-                </th>
-                <th class="text-left" style="min-width: 100px">{{ t('invoice.date') }}</th>
-                <th class="text-left" style="min-width: 200px">{{ t('invoice.description') }}</th>
-                <th class="text-right" style="min-width: 120px">{{ t('invoice.total') }}</th>
-                <th class="text-right" style="min-width: 120px">{{ t('invoice.split.difference') }}</th>
-                <th class="text-center" style="width: 60px"></th>
-                <th
-                  v-for="participant in participants"
-                  :key="participant.id"
-                  class="text-left"
-                  style="min-width: 200px"
-                >
-                  {{ participant.name }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="transaction in filteredTransactions"
-                :key="transaction.id"
-                :class="{ 'bg-error-lighten-4': !isTransactionValid(transaction) }"
-              >
-                <td class="text-center">
                   <v-tooltip location="top">
                     <template #activator="{ props }">
                       <v-btn
@@ -828,162 +989,134 @@ onMounted(async () => {
                         size="x-small"
                         variant="text"
                         color="error"
-                        :disabled="isCompleted"
-                        @click="confirmDeleteTransaction(transaction.id)"
+                        @click="cancelEditTransactionAmount(transaction.id)"
                       />
                     </template>
-                    <span>{{ t('invoice.split.deleteTransaction') }}</span>
+                    <span>{{ t('common.cancel') }}</span>
                   </v-tooltip>
-                </td>
-                <td class="text-no-wrap">{{ new Date(transaction.date).toLocaleDateString('pt-BR') }}</td>
-                <td class="text-truncate" style="max-width: 200px">
+                </div>
+              </td>
+              <td
+                class="text-right font-weight-bold text-no-wrap"
+                :class="getTransactionDifference(transaction) === 0 ? 'text-success' : 'text-error'"
+              >
+                {{
+                  getTransactionDifference(transaction).toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                  })
+                }}
+              </td>
+              <td class="text-center">
+                <div class="d-flex align-center justify-center gap-1">
                   <v-tooltip location="top">
                     <template #activator="{ props }">
-                      <span v-bind="props">{{ transaction.description }}</span>
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-calculator-variant"
+                        size="small"
+                        variant="text"
+                        :disabled="isCompleted || !canDivideAll(transaction)"
+                        @click="autoSplitTransaction(transaction)"
+                      />
                     </template>
-                    <span>{{ transaction.description }}</span>
+                    <span>{{ t('invoice.split.divideAll') }}</span>
                   </v-tooltip>
-                </td>
-                <td class="text-right font-weight-bold text-no-wrap">
-                  <div v-if="!isTransactionAmountEditable(transaction.id)" class="d-flex align-center justify-end gap-1">
-                    <span>{{ transaction.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}</span>
-                    <v-tooltip location="top">
-                      <template #activator="{ props }">
-                        <v-btn
-                          v-bind="props"
-                          icon="mdi-pencil"
-                          size="x-small"
-                          variant="text"
-                          :disabled="isCompleted"
-                          @click="toggleEditTransactionAmount(transaction.id)"
-                        />
-                      </template>
-                      <span>{{ t('invoice.split.editAmount') }}</span>
-                    </v-tooltip>
-                  </div>
-                  <div v-else class="d-flex align-center justify-end gap-1">
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-eraser-variant"
+                        size="small"
+                        variant="text"
+                        color="error"
+                        :disabled="isCompleted || !canRemoveAll(transaction)"
+                        @click="removeAllSplits(transaction)"
+                      />
+                    </template>
+                    <span>{{ t('invoice.split.removeAll') }}</span>
+                  </v-tooltip>
+                </div>
+              </td>
+              <td
+                v-for="participant in participants"
+                :key="participant.id"
+                class="pa-1"
+              >
+                <div class="d-flex align-center gap-1">
+                  <div style="position: relative; width: 130px">
                     <MoneyInput
-                      :ref="(el) => transactionAmountInputRefs[transaction.id] = el"
-                      :model-value="getTransactionAmount(transaction.id)"
-                      @update:model-value="(val) => updateTransactionAmount(transaction.id, val)"
-                      @keydown="(e: KeyboardEvent) => handleTransactionAmountKeydown(e, transaction.id)"
+                      :model-value="getSplitValue(transaction.id, participant.id)"
+                      @update:model-value="
+                        (val) => updateSplitValue(transaction.id, participant.id, val)
+                      "
                       density="compact"
                       hide-details
                       variant="outlined"
-                      style="width: 130px;"
+                      :disabled="isCompleted"
+                      :color="isManualValue(transaction.id, participant.id) ? 'primary' : undefined"
                     />
-                    <v-tooltip location="top">
+                    <v-tooltip
+                      location="top"
+                      v-if="
+                        isManualValue(transaction.id, participant.id) &&
+                        getSplitValue(transaction.id, participant.id) !== 0
+                      "
+                    >
                       <template #activator="{ props }">
-                        <v-btn
+                        <v-icon
                           v-bind="props"
-                          icon="mdi-check"
                           size="x-small"
-                          variant="text"
-                          color="success"
-                          @click="saveTransactionAmount(transaction.id)"
-                        />
+                          color="primary"
+                          style="position: absolute; top: 2px; right: 2px"
+                        >
+                          mdi-pencil
+                        </v-icon>
                       </template>
-                      <span>{{ t('invoice.split.saveAmount') }}</span>
-                    </v-tooltip>
-                    <v-tooltip location="top">
-                      <template #activator="{ props }">
-                        <v-btn
-                          v-bind="props"
-                          icon="mdi-close"
-                          size="x-small"
-                          variant="text"
-                          color="error"
-                          @click="cancelEditTransactionAmount(transaction.id)"
-                        />
-                      </template>
-                      <span>{{ t('common.cancel') }}</span>
+                      <span>{{ t('invoice.split.manualValue') }}</span>
                     </v-tooltip>
                   </div>
-                </td>
-                <td class="text-right font-weight-bold text-no-wrap" :class="getTransactionDifference(transaction) === 0 ? 'text-success' : 'text-error'">
-                  {{ getTransactionDifference(transaction).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
-                </td>
-                <td class="text-center">
-                  <div class="d-flex align-center justify-center gap-1">
-                    <v-tooltip location="top">
-                      <template #activator="{ props }">
-                        <v-btn
-                          v-bind="props"
-                          icon="mdi-calculator-variant"
-                          size="small"
-                          variant="text"
-                          :disabled="isCompleted || !canDivideAll(transaction)"
-                          @click="autoSplitTransaction(transaction)"
-                        />
-                      </template>
-                      <span>{{ t('invoice.split.divideAll') }}</span>
-                    </v-tooltip>
-                    <v-tooltip location="top">
-                      <template #activator="{ props }">
-                        <v-btn
-                          v-bind="props"
-                          icon="mdi-eraser-variant"
-                          size="small"
-                          variant="text"
-                          color="error"
-                          :disabled="isCompleted || !canRemoveAll(transaction)"
-                          @click="removeAllSplits(transaction)"
-                        />
-                      </template>
-                      <span>{{ t('invoice.split.removeAll') }}</span>
-                    </v-tooltip>
-                  </div>
-                </td>
-                <td
-                  v-for="participant in participants"
-                  :key="participant.id"
-                  class="pa-1"
-                >
-                  <div class="d-flex align-center gap-1">
-                    <div style="position: relative; width: 130px;">
-                      <MoneyInput
-                        :model-value="getSplitValue(transaction.id, participant.id)"
-                        @update:model-value="(val) => updateSplitValue(transaction.id, participant.id, val)"
-                        density="compact"
-                        hide-details
-                        variant="outlined"
+                  <v-tooltip
+                    location="top"
+                    v-if="
+                      !isManualValue(transaction.id, participant.id) ||
+                      getSplitValue(transaction.id, participant.id) === 0
+                    "
+                  >
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        :icon="
+                          getSplitValue(transaction.id, participant.id) !== 0
+                            ? 'mdi-minus'
+                            : 'mdi-plus'
+                        "
+                        size="x-small"
+                        variant="text"
+                        :color="
+                          getSplitValue(transaction.id, participant.id) !== 0 ? 'error' : 'success'
+                        "
                         :disabled="isCompleted"
-                        :color="isManualValue(transaction.id, participant.id) ? 'primary' : undefined"
+                        @click="toggleParticipantSplit(transaction, participant)"
                       />
-                      <v-tooltip location="top" v-if="isManualValue(transaction.id, participant.id) && getSplitValue(transaction.id, participant.id) !== 0">
-                        <template #activator="{ props }">
-                          <v-icon 
-                            v-bind="props"
-                            size="x-small" 
-                            color="primary" 
-                            style="position: absolute; top: 2px; right: 2px;"
-                          >
-                            mdi-pencil
-                          </v-icon>
-                        </template>
-                        <span>{{ t('invoice.split.manualValue') }}</span>
-                      </v-tooltip>
-                    </div>
-                    <v-tooltip location="top" v-if="!isManualValue(transaction.id, participant.id) || getSplitValue(transaction.id, participant.id) === 0">
-                      <template #activator="{ props }">
-                        <v-btn
-                          v-bind="props"
-                          :icon="getSplitValue(transaction.id, participant.id) !== 0 ? 'mdi-minus' : 'mdi-plus'"
-                          size="x-small"
-                          variant="text"
-                          :color="getSplitValue(transaction.id, participant.id) !== 0 ? 'error' : 'success'"
-                          :disabled="isCompleted"
-                          @click="toggleParticipantSplit(transaction, participant)"
-                        />
-                      </template>
-                      <span>{{ getSplitValue(transaction.id, participant.id) !== 0 ? t('invoice.split.remove') : t('invoice.split.add') }}</span>
-                    </v-tooltip>
-                    <div v-else style="width: 28px"></div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+                    </template>
+                    <span>
+                      {{
+                        getSplitValue(transaction.id, participant.id) !== 0
+                          ? t('invoice.split.remove')
+                          : t('invoice.split.add')
+                      }}
+                    </span>
+                  </v-tooltip>
+                  <div
+                    v-else
+                    style="width: 28px"
+                  ></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
       </v-card-text>
     </v-card>
 
@@ -992,16 +1125,39 @@ onMounted(async () => {
         <v-table density="compact">
           <tbody>
             <tr class="bg-grey-lighten-4">
-              <td class="text-center" style="width: 50px"></td>
-              <td class="text-left font-weight-bold" style="min-width: 100px">{{ t('invoice.split.totals') }}</td>
-              <td class="text-left" style="min-width: 200px"></td>
-              <td class="text-right font-weight-bold text-h6" style="min-width: 120px">
+              <td
+                class="text-center"
+                style="width: 50px"
+              ></td>
+              <td
+                class="text-left font-weight-bold"
+                style="min-width: 100px"
+              >
+                {{ t('invoice.split.totals') }}
+              </td>
+              <td
+                class="text-left"
+                style="min-width: 200px"
+              ></td>
+              <td
+                class="text-right font-weight-bold text-h6"
+                style="min-width: 120px"
+              >
                 {{ grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
               </td>
-              <td class="text-right font-weight-bold text-h6" style="min-width: 120px" :class="totalDifference === 0 ? 'text-success' : 'text-error'">
-                {{ totalDifference.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+              <td
+                class="text-right font-weight-bold text-h6"
+                style="min-width: 120px"
+                :class="totalDifference === 0 ? 'text-success' : 'text-error'"
+              >
+                {{
+                  totalDifference.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                }}
               </td>
-              <td class="text-center" style="width: 60px"></td>
+              <td
+                class="text-center"
+                style="width: 60px"
+              ></td>
               <td
                 v-for="participant in participants"
                 :key="participant.id"
@@ -1010,7 +1166,12 @@ onMounted(async () => {
               >
                 <div class="text-caption text-medium-emphasis">{{ participant.name }}</div>
                 <div class="text-body-1 font-weight-bold">
-                  {{ (totalsByParticipant[participant.id] || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+                  {{
+                    (totalsByParticipant[participant.id] || 0).toLocaleString('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    })
+                  }}
                 </div>
               </td>
             </tr>
@@ -1037,14 +1198,18 @@ onMounted(async () => {
             @click="copyAllMessages"
             size="small"
           >
-            {{ copiedParticipantId === 'all' ? t('invoice.whatsapp.copiedAll') : t('invoice.whatsapp.copyAll') }}
+            {{
+              copiedParticipantId === 'all'
+                ? t('invoice.whatsapp.copiedAll')
+                : t('invoice.whatsapp.copyAll')
+            }}
           </v-btn>
         </div>
       </template>
-      
+
       <v-expansion-panels>
         <v-expansion-panel
-          v-for="participant in participants.filter(p => (totalsByParticipant[p.id] || 0) !== 0)"
+          v-for="participant in participants.filter((p) => (totalsByParticipant[p.id] || 0) !== 0)"
           :key="participant.id"
         >
           <v-expansion-panel-title>
@@ -1053,7 +1218,12 @@ onMounted(async () => {
                 {{ participant.name }}
               </span>
               <span class="text-success font-weight-bold">
-                {{ (totalsByParticipant[participant.id] || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+                {{
+                  (totalsByParticipant[participant.id] || 0).toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                  })
+                }}
               </span>
             </div>
           </v-expansion-panel-title>
@@ -1071,7 +1241,11 @@ onMounted(async () => {
                 prepend-icon="mdi-content-copy"
                 @click="copyToClipboard(participant.id)"
               >
-                {{ copiedParticipantId === participant.id ? t('invoice.whatsapp.copied') : t('invoice.whatsapp.copy') }}
+                {{
+                  copiedParticipantId === participant.id
+                    ? t('invoice.whatsapp.copied')
+                    : t('invoice.whatsapp.copy')
+                }}
               </v-btn>
               <v-btn
                 color="success"
@@ -1124,19 +1298,26 @@ onMounted(async () => {
       </v-row>
     </ModalBase>
   </div>
-  <div v-else class="d-flex justify-center align-center" style="height: 400px">
-    <v-progress-circular indeterminate color="primary" />
+  <div
+    v-else
+    class="d-flex justify-center align-center"
+    style="height: 400px"
+  >
+    <v-progress-circular
+      indeterminate
+      color="primary"
+    />
   </div>
 </template>
 
 <style scoped>
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
   text-align: right;

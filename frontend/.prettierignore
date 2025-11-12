@@ -1,0 +1,14 @@
+# Ignore artifacts:
+dist
+build
+coverage
+
+# Ignore all generated files
+*.log
+*.lock
+node_modules
+
+# Ignore configuration files
+.env
+.env.*
+!.env.example

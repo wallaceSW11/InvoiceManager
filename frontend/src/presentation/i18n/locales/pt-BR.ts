@@ -46,6 +46,7 @@ export default {
     lastFourDigits: 'Últimos 4 Dígitos',
     createdAt: 'Criado Em',
     updatedAt: 'Atualizado Em',
+    noData: 'Nenhum cartão cadastrado',
     validation: {
       nicknameRequired: 'Apelido é obrigatório',
       nicknameTooLong: 'Apelido deve ter no máximo 15 caracteres',
@@ -70,6 +71,7 @@ export default {
     phoneNumber: 'Telefone',
     createdAt: 'Criado Em',
     updatedAt: 'Atualizado Em',
+    noData: 'Nenhum participante cadastrado',
     validation: {
       nameRequired: 'Nome é obrigatório',
       nameTooLong: 'Nome deve ter no máximo 20 caracteres',
@@ -115,6 +117,7 @@ export default {
       title: 'Faturas',
       subtitle: 'Todas as Faturas',
       noInvoices: 'Nenhuma fatura encontrada',
+      noData: 'Nenhuma fatura importada',
       deleteConfirm: 'Excluir Fatura',
       deleteMessage: 'Deseja realmente excluir a fatura do cartão {card} com vencimento em {date}?'
     },
@@ -211,7 +214,8 @@ export default {
   },
   export: {
     title: 'Exportar Dados',
-    description: 'Selecione os dados que deseja exportar. Os arquivos serão baixados no formato JSON.',
+    description:
+      'Selecione os dados que deseja exportar. Os arquivos serão baixados no formato JSON.',
     cards: 'Cartões',
     participants: 'Participantes',
     invoices: 'Faturas',
@@ -222,8 +226,10 @@ export default {
   },
   import: {
     title: 'Importar Dados',
-    description: 'Selecione os arquivos JSON para importar. Os dados existentes serão atualizados ou novos serão criados.',
-    warning: 'Atenção: Se um registro com o mesmo ID já existir, ele será atualizado com os dados do arquivo.',
+    description:
+      'Selecione os arquivos JSON para importar. Os dados do tipo selecionado serão substituídos.',
+    warning:
+      'ATENÇÃO: Ao importar, todos os dados existentes do tipo selecionado (Cartões, Participantes ou Faturas) serão excluídos e substituídos pelos dados do arquivo.',
     cards: 'Cartões',
     participants: 'Participantes',
     invoices: 'Faturas',
@@ -243,4 +249,4 @@ export default {
     light: 'Modo claro',
     dark: 'Modo escuro'
   }
-}
+};

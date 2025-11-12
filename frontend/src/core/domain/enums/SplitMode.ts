@@ -1,6 +1,6 @@
 export const SplitMode = {
   MANUAL: 'MANUAL',
   EQUAL_DIVISION: 'EQUAL_DIVISION'
-} as const
+} as const;
 
-export type SplitMode = typeof SplitMode[keyof typeof SplitMode]
+export type SplitMode = (typeof SplitMode)[keyof typeof SplitMode];

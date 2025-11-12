@@ -1,7 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
+import type { RouteRecordRaw } from 'vue-router';
 
-export * from './navigationHelper'
+export * from './navigationHelper';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -47,16 +47,16 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/presentation/views/ImportView.vue'),
     meta: { titleKey: 'nav.import' }
   }
-]
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
-})
+});
 
 router.beforeEach((_to, _from, next) => {
-  document.title = 'InvoiceManager'
-  next()
-})
+  document.title = 'Invoice Manager';
+  next();
+});
 
-export default router
+export default router;

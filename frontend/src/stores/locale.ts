@@ -1,21 +1,19 @@
-import { defineStore } from "pinia";
-import { ref, watch } from "vue";
-import { i18n } from "@/presentation/i18n";
-import { defaultLocale, type LocaleCode } from "@wallacesw11/base-lib";
+import { defineStore } from 'pinia';
+import { ref, watch } from 'vue';
+import { i18n } from '@/presentation/i18n';
+import { defaultLocale, type LocaleCode } from '@wallacesw11/base-lib';
 
-const LOCALE_STORAGE_KEY = "app-locale";
+const LOCALE_STORAGE_KEY = 'app-locale';
 
 function detectBrowserLocale(): LocaleCode {
   const browserLang = navigator.language;
-  return browserLang.startsWith("pt") ? "pt-BR" : "en-US";
+  return browserLang.startsWith('pt') ? 'pt-BR' : 'en-US';
 }
 
 function loadSavedLocaleOrDetect(): LocaleCode {
-  const savedLocale = localStorage.getItem(
-    LOCALE_STORAGE_KEY
-  ) as LocaleCode | null;
+  const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY) as LocaleCode | null;
 
-  if (savedLocale && (savedLocale === "pt-BR" || savedLocale === "en-US")) {
+  if (savedLocale && (savedLocale === 'pt-BR' || savedLocale === 'en-US')) {
     return savedLocale;
   }
 
@@ -30,7 +28,7 @@ function persistLocale(locale: LocaleCode) {
   localStorage.setItem(LOCALE_STORAGE_KEY, locale);
 }
 
-export const useLocaleStore = defineStore("locale", () => {
+export const useLocaleStore = defineStore('locale', () => {
   const currentLocale = ref<LocaleCode>(defaultLocale);
 
   const initializeLocale = () => {
@@ -53,6 +51,6 @@ export const useLocaleStore = defineStore("locale", () => {
   return {
     currentLocale,
     setLocale,
-    initializeLocale,
+    initializeLocale
   };
 });
