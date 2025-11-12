@@ -1188,24 +1188,21 @@ onMounted(async () => {
       :fullscreen="isMobileOrTablet"
       attach="body"
     >
-      <template #title>
-        <div class="d-flex justify-space-between align-center w-100">
-          <span>{{ t('invoice.whatsapp.title') }}</span>
-          <v-btn
-            color="primary"
-            variant="tonal"
-            prepend-icon="mdi-content-copy"
-            @click="copyAllMessages"
-            size="small"
-          >
-            {{
-              copiedParticipantId === 'all'
-                ? t('invoice.whatsapp.copiedAll')
-                : t('invoice.whatsapp.copyAll')
-            }}
-          </v-btn>
-        </div>
-      </template>
+      <div class="mb-4 d-flex justify-end">
+        <v-btn
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-content-copy"
+          @click="copyAllMessages"
+          size="small"
+        >
+          {{
+            copiedParticipantId === 'all'
+              ? t('invoice.whatsapp.copiedAll')
+              : t('invoice.whatsapp.copyAll')
+          }}
+        </v-btn>
+      </div>
 
       <v-expansion-panels>
         <v-expansion-panel
