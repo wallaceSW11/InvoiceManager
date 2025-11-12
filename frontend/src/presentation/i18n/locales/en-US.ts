@@ -46,6 +46,7 @@ export default {
     lastFourDigits: 'Last 4 Digits',
     createdAt: 'Created At',
     updatedAt: 'Updated At',
+    noData: 'No cards registered',
     validation: {
       nicknameRequired: 'Nickname is required',
       nicknameTooLong: 'Nickname must be at most 15 characters',
@@ -70,6 +71,7 @@ export default {
     phoneNumber: 'Phone Number',
     createdAt: 'Created At',
     updatedAt: 'Updated At',
+    noData: 'No participants registered',
     validation: {
       nameRequired: 'Name is required',
       nameTooLong: 'Name must be at most 20 characters',
@@ -115,6 +117,7 @@ export default {
       title: 'Invoices',
       subtitle: 'All Invoices',
       noInvoices: 'No invoices found',
+      noData: 'No invoices imported',
       deleteConfirm: 'Delete Invoice',
       deleteMessage: 'Are you sure you want to delete the invoice for card {card} due on {date}?'
     },

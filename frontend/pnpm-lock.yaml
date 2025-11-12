@@ -13,7 +13,7 @@ importers:
         version: 7.4.47
       '@wallacesw11/base-lib':
         specifier: github:wallacesw11/BaseLib#main
-        version: https://codeload.github.com/wallacesw11/BaseLib/tar.gz/f9da1c5ea64f807722c66bf7c0968e3f16d4986b(axios@1.13.1)(pinia@3.0.3(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3)))(vue-i18n@11.1.12(vue@3.5.22(typescript@5.9.3)))(vue@3.5.22(typescript@5.9.3))(vuetify@3.10.8)
+        version: https://codeload.github.com/wallacesw11/BaseLib/tar.gz/0e240a1a666196896bfa5b82aa66b11a21ae2b42(axios@1.13.1)(pinia@3.0.3(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3)))(vue-i18n@11.1.12(vue@3.5.22(typescript@5.9.3)))(vue@3.5.22(typescript@5.9.3))(vuetify@3.10.8)
       axios:
         specifier: ^1.13.1
         version: 1.13.1
@@ -1028,8 +1028,8 @@ packages:
       vue: ^3.0.0
       vuetify: ^3.0.0
 
-  '@wallacesw11/base-lib@https://codeload.github.com/wallacesw11/BaseLib/tar.gz/f9da1c5ea64f807722c66bf7c0968e3f16d4986b':
-    resolution: {tarball: https://codeload.github.com/wallacesw11/BaseLib/tar.gz/f9da1c5ea64f807722c66bf7c0968e3f16d4986b}
+  '@wallacesw11/base-lib@https://codeload.github.com/wallacesw11/BaseLib/tar.gz/0e240a1a666196896bfa5b82aa66b11a21ae2b42':
+    resolution: {tarball: https://codeload.github.com/wallacesw11/BaseLib/tar.gz/0e240a1a666196896bfa5b82aa66b11a21ae2b42}
     version: 1.0.1
     peerDependencies:
       axios: ^1.0.0
@@ -1096,8 +1096,8 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  baseline-browser-mapping@2.8.26:
-    resolution: {integrity: sha512-73lC1ugzwoaWCLJ1LvOgrR5xsMLTqSKIEoMHVtL9E/HNk0PXtTM76ZIm84856/SF7Nv8mPZxKoBsgpm0tR1u1Q==}
+  baseline-browser-mapping@2.8.27:
+    resolution: {integrity: sha512-2CXFpkjVnY2FT+B6GrSYxzYf65BJWEqz5tIRHCvNsZZ2F3CmsCB37h8SpYgKG7y9C4YAeTipIPWG7EmFmhAeXA==}
     hasBin: true
 
   big.js@7.0.1:
@@ -3144,7 +3144,7 @@ snapshots:
       vue: 3.5.22(typescript@5.9.3)
       vuetify: 3.10.8(typescript@5.9.3)(vite-plugin-vuetify@2.1.2)(vue@3.5.22(typescript@5.9.3))
 
-  '@wallacesw11/base-lib@https://codeload.github.com/wallacesw11/BaseLib/tar.gz/f9da1c5ea64f807722c66bf7c0968e3f16d4986b(axios@1.13.1)(pinia@3.0.3(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3)))(vue-i18n@11.1.12(vue@3.5.22(typescript@5.9.3)))(vue@3.5.22(typescript@5.9.3))(vuetify@3.10.8)':
+  '@wallacesw11/base-lib@https://codeload.github.com/wallacesw11/BaseLib/tar.gz/0e240a1a666196896bfa5b82aa66b11a21ae2b42(axios@1.13.1)(pinia@3.0.3(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3)))(vue-i18n@11.1.12(vue@3.5.22(typescript@5.9.3)))(vue@3.5.22(typescript@5.9.3))(vuetify@3.10.8)':
     dependencies:
       axios: 1.13.1
       pinia: 3.0.3(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3))
@@ -3224,7 +3224,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  baseline-browser-mapping@2.8.26: {}
+  baseline-browser-mapping@2.8.27: {}
 
   big.js@7.0.1: {}
 
@@ -3241,7 +3241,7 @@ snapshots:
 
   browserslist@4.28.0:
     dependencies:
-      baseline-browser-mapping: 2.8.26
+      baseline-browser-mapping: 2.8.27
       caniuse-lite: 1.0.30001754
       electron-to-chromium: 1.5.250
       node-releases: 2.0.27

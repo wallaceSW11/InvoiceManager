@@ -36,6 +36,9 @@
               @click="confirmDelete(item)"
             />
           </template>
+          <template #no-data>
+            {{ t('cards.noData') }}
+          </template>
         </v-data-table>
       </v-card-text>
     </v-card>
@@ -93,7 +96,7 @@ const { isMobileOrTablet } = useBreakpoint()
 const headers = computed(() => [
   { title: t('cards.nickname'), key: 'nickname' },
   { title: t('cards.lastDigits'), key: 'lastFourDigits' },
-  { title: t('common.actions'), key: 'actions', sortable: false }
+  { title: t('common.actions'), key: 'actions', sortable: false, width: '120px' }
 ])
 
 const dialog = ref(false)
@@ -112,7 +115,7 @@ const modalActions = computed((): ModalAction[] => [
     color: 'primary',
     variant: 'elevated',
     icon: 'mdi-content-save',
-    handler: saveCard
+    handler: saveCard as any
   },
   {
     text: t('common.cancel'),
@@ -144,26 +147,33 @@ function openDialog(card?: Card) {
 }
 
 async function saveCard() {
-  if (!formValid.value) return
+  if (!formValid.value) return false
+
+  const isEditing = !!editingCard.value
 
   try {
-    if (editingCard.value) {
-      await cardStore.updateCard(editingCard.value.id, form.value)
+    if (isEditing) {
+      await cardStore.updateCard(editingCard.value!.id, form.value)
       notify.success(t('cards.messages.updated'))
-      dialog.value = false
       editingCard.value = null
+      return true
     } else {
       await cardStore.createCard(form.value)
       notify.success(t('cards.messages.created'))
+      
       form.value = { nickname: '', lastFourDigits: '' }
-      formRef.value?.resetValidation()
-      nextTick(() => {
-        nicknameFieldRef.value?.focus()
-      })
+      formRef.value?.reset()
+      
+      await nextTick()
+      if (nicknameFieldRef.value) {
+        nicknameFieldRef.value.focus()
+      }
+      return false
     }
   } catch (error) {
     console.error('Error saving card:', error)
     notify.error(t('cards.messages.error'))
+    return false
   }
 }
 

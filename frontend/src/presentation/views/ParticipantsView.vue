@@ -36,6 +36,9 @@
               @click="confirmDelete(item)"
             />
           </template>
+          <template #no-data>
+            {{ t('participants.noData') }}
+          </template>
         </v-data-table>
       </v-card-text>
     </v-card>
@@ -97,7 +100,7 @@ const { isMobileOrTablet } = useBreakpoint()
 const headers = computed(() => [
   { title: t('participants.name'), key: 'name' },
   { title: t('participants.phoneNumber'), key: 'phoneNumber' },
-  { title: t('common.actions'), key: 'actions', sortable: false }
+  { title: t('common.actions'), key: 'actions', sortable: false, width: '120px' }
 ])
 
 const dialog = ref(false)
@@ -116,7 +119,7 @@ const modalActions = computed((): ModalAction[] => [
     color: 'primary',
     variant: 'elevated',
     icon: 'mdi-content-save',
-    handler: saveParticipant
+    handler: saveParticipant as any
   },
   {
     text: t('common.cancel'),
@@ -163,33 +166,40 @@ function handlePhoneInput(event: Event) {
 }
 
 async function saveParticipant() {
-  if (!formValid.value) return
+  if (!formValid.value) return false
+
+  const isEditing = !!editingParticipant.value
 
   try {
     const cleanPhone = unformatPhone(form.value.phoneNumber)
-    if (editingParticipant.value) {
-      await participantStore.updateParticipant(editingParticipant.value.id, {
+    if (isEditing) {
+      await participantStore.updateParticipant(editingParticipant.value!.id, {
         ...form.value,
         phoneNumber: cleanPhone
       })
       notify.success(t('participants.messages.updated'))
-      dialog.value = false
       editingParticipant.value = null
+      return true
     } else {
       await participantStore.createParticipant({
         ...form.value,
         phoneNumber: cleanPhone
       })
       notify.success(t('participants.messages.created'))
+      
       form.value = { name: '', phoneNumber: '' }
-      formRef.value?.resetValidation()
-      nextTick(() => {
-        nameFieldRef.value?.focus()
-      })
+      formRef.value?.reset()
+      
+      await nextTick()
+      if (nameFieldRef.value) {
+        nameFieldRef.value.focus()
+      }
+      return false
     }
   } catch (error) {
     console.error('Error saving participant:', error)
     notify.error(t('participants.messages.error'))
+    return false
   }
 }
 

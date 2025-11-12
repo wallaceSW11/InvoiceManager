@@ -46,6 +46,7 @@ export default {
     lastFourDigits: 'Últimos 4 Dígitos',
     createdAt: 'Criado Em',
     updatedAt: 'Atualizado Em',
+    noData: 'Nenhum cartão cadastrado',
     validation: {
       nicknameRequired: 'Apelido é obrigatório',
       nicknameTooLong: 'Apelido deve ter no máximo 15 caracteres',
@@ -70,6 +71,7 @@ export default {
     phoneNumber: 'Telefone',
     createdAt: 'Criado Em',
     updatedAt: 'Atualizado Em',
+    noData: 'Nenhum participante cadastrado',
     validation: {
       nameRequired: 'Nome é obrigatório',
       nameTooLong: 'Nome deve ter no máximo 20 caracteres',
@@ -115,6 +117,7 @@ export default {
       title: 'Faturas',
       subtitle: 'Todas as Faturas',
       noInvoices: 'Nenhuma fatura encontrada',
+      noData: 'Nenhuma fatura importada',
       deleteConfirm: 'Excluir Fatura',
       deleteMessage: 'Deseja realmente excluir a fatura do cartão {card} com vencimento em {date}?'
     },

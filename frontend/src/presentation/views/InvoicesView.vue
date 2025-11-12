@@ -52,9 +52,7 @@
           </template>
 
           <template #no-data>
-            <v-alert type="info" variant="tonal">
-              {{ t('invoice.list.noInvoices') }}
-            </v-alert>
+            {{ t('invoice.list.noData') }}
           </template>
         </v-data-table>
       </v-card-text>
@@ -84,7 +82,7 @@ const headers = computed(() => [
   { title: t('invoice.dueDate'), key: 'dueDate', sortable: true },
   { title: t('invoice.total'), key: 'totalAmount', sortable: true },
   { title: t('invoice.status'), key: 'status', sortable: true },
-  { title: t('common.actions'), key: 'actions', sortable: false, align: 'end' as const }
+  { title: t('common.actions'), key: 'actions', sortable: false, align: 'end' as const, width: '120px' }
 ])
 
 onMounted(async () => {
