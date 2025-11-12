@@ -5,12 +5,14 @@ import { useCardStore } from "@/presentation/stores/cardStore";
 import { useInvoiceStore } from "@/presentation/stores/invoiceStore";
 import { CSVParser } from "@/infrastructure/parsers";
 import { ModalBase, useGlobals } from "@wallacesw11/base-lib";
+import { useBreakpoint } from "@wallacesw11/base-lib/composables";
 import type { ModalAction } from "@wallacesw11/base-lib";
 
 const { t } = useI18n();
 const cardStore = useCardStore();
 const invoiceStore = useInvoiceStore();
 const { notify } = useGlobals();
+const { isMobileOrTablet } = useBreakpoint();
 
 const emit = defineEmits<{
   close: [];
@@ -152,6 +154,7 @@ cardStore.fetchCards();
     v-model="dialog"
     :title="t('invoice.import.title')"
     :actions="modalActions"
+    :fullscreen="isMobileOrTablet"
     max-width="600"
   >
     <v-form @submit.prevent="importInvoice">

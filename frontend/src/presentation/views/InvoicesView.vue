@@ -21,6 +21,8 @@
           :items="invoiceStore.invoices"
           :loading="invoiceStore.loading"
           item-value="id"
+          fixed-header
+          height="calc(100dvh - 290px)"
         >
           <template #item.cardId="{ item }">
             {{ getCardName(item.cardId) }}

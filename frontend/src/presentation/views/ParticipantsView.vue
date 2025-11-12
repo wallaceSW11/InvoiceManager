@@ -13,6 +13,8 @@
           :headers="headers"
           :items="participantStore.participants"
           :loading="participantStore.loading"
+          fixed-header
+          height="calc(100dvh - 220px)"
         >
           <template #item.phoneNumber="{ item }">
             {{ formatPhone(item.phoneNumber) }}
@@ -41,6 +43,7 @@
       :title="editingParticipant ? t('participants.edit') : t('participants.new')"
       :actions="modalActions"
       max-width="500"
+      :fullscreen="isMobileOrTablet"
     >
       <v-form ref="formRef" v-model="formValid">
         <v-text-field
@@ -80,12 +83,14 @@ import { useParticipantStore } from '@/presentation/stores/participantStore'
 import { usePhoneMask } from '@/presentation/composables/usePhoneMask'
 import type { Participant } from '@/core/domain/entities'
 import { ModalBase, useGlobals } from '@wallacesw11/base-lib'
+import { useBreakpoint } from '@wallacesw11/base-lib/composables'
 import type { ModalAction } from '@wallacesw11/base-lib'
 
 const { t } = useI18n()
 const participantStore = useParticipantStore()
 const { formatPhone, unformatPhone, validatePhone } = usePhoneMask()
 const { notify, confirm } = useGlobals()
+const { isMobileOrTablet } = useBreakpoint()
 
 const headers = computed(() => [
   { title: t('participants.name'), key: 'name' },

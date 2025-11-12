@@ -13,6 +13,8 @@
           :headers="headers"
           :items="cardStore.cards"
           :loading="cardStore.loading"
+          fixed-header
+          height="calc(100dvh - 220px)"
         >
           <template #item.lastFourDigits="{ item }">
             **** {{ item.lastFourDigits }}
@@ -41,6 +43,7 @@
       :title="editingCard ? t('cards.edit') : t('cards.new')"
       :actions="modalActions"
       max-width="500"
+      :fullscreen="isMobileOrTablet"
     >
       <v-form ref="formRef" v-model="formValid">
         <v-text-field
@@ -77,11 +80,13 @@ import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@/presentation/stores/cardStore'
 import type { Card } from '@/core/domain/entities'
 import { ModalBase, useGlobals } from '@wallacesw11/base-lib'
+import { useBreakpoint } from '@wallacesw11/base-lib/composables'
 import type { ModalAction } from '@wallacesw11/base-lib'
 
 const { t } = useI18n()
 const cardStore = useCardStore()
 const { notify, confirm } = useGlobals()
+const { isMobileOrTablet } = useBreakpoint()
 
 const headers = computed(() => [
   { title: t('cards.nickname'), key: 'nickname' },

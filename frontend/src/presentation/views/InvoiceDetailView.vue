@@ -10,7 +10,9 @@ import { SplitMode, InvoiceStatus } from '@/core/domain/enums'
 import type { Transaction, TransactionSplit, Participant } from '@/core/domain/entities'
 import { MoneyCalculator } from '@/shared/utils/MoneyCalculator'
 import MoneyInput from '@/presentation/components/common/MoneyInput.vue'
-import { notify } from '@wallacesw11/base-lib'
+import { notify, confirm, ModalBase } from '@wallacesw11/base-lib'
+import { useBreakpoint } from '@wallacesw11/base-lib/composables'
+import type { ModalAction } from '@wallacesw11/base-lib/components'
 
 
 const { t } = useI18n()
@@ -19,6 +21,7 @@ const router = useRouter()
 const invoiceStore = useInvoiceStore()
 const participantStore = useParticipantStore()
 const cardStore = useCardStore()
+const { isMobileOrTablet } = useBreakpoint()
 
 const transactionSplits = ref<Record<string, Record<string, number>>>({})
 const manualValues = ref<Record<string, Record<string, boolean>>>({})
@@ -30,8 +33,6 @@ const searchQuery = ref('')
 const editableTransactionAmounts = ref<Record<string, boolean>>({})
 const tempTransactionAmounts = ref<Record<string, number>>({})
 const transactionAmountInputRefs = ref<Record<string, any>>({})
-const showDeleteConfirmDialog = ref(false)
-const transactionToDelete = ref<string | null>(null)
 const showAddTransactionDialog = ref(false)
 const newTransaction = ref<{
   date: string
@@ -45,6 +46,27 @@ const newTransaction = ref<{
 
 const invoice = computed(() => invoiceStore.currentInvoice)
 const participants = computed(() => participantStore.participants)
+
+const addTransactionActions = computed<ModalAction[]>(() => [
+  { 
+    text: t('common.cancel'), 
+    color: 'grey', 
+    handler: () => cancelAddTransaction() 
+  },
+  { 
+    text: t('common.add'), 
+    color: 'primary', 
+    handler: () => addTransaction() 
+  }
+])
+
+const whatsAppActions = computed<ModalAction[]>(() => [
+  { 
+    text: t('common.close'), 
+    color: 'grey', 
+    handler: () => closeWhatsAppDialog() 
+  }
+])
 const card = computed(() => {
   if (!invoice.value) return null
   return cardStore.getCardById(invoice.value.cardId)
@@ -387,15 +409,20 @@ function handleTransactionAmountKeydown(event: KeyboardEvent, transactionId: str
   }
 }
 
-function confirmDeleteTransaction(transactionId: string) {
-  transactionToDelete.value = transactionId
-  showDeleteConfirmDialog.value = true
+async function confirmDeleteTransaction(transactionId: string) {
+  const confirmed = await confirm.show(
+    t('invoice.split.confirmDelete'),
+    t('invoice.split.confirmDeleteMessage')
+  )
+  
+  if (confirmed) {
+    deleteTransaction(transactionId)
+  }
 }
 
-async function deleteTransaction() {
-  if (!invoice.value || !transactionToDelete.value) return
+function deleteTransaction(transactionId: string) {
+  if (!invoice.value) return
   
-  const transactionId = transactionToDelete.value
   const transactionIndex = invoice.value.transactions.findIndex(t => t.id === transactionId)
   
   if (transactionIndex !== -1) {
@@ -407,15 +434,7 @@ async function deleteTransaction() {
   delete editableTransactionAmounts.value[transactionId]
   delete tempTransactionAmounts.value[transactionId]
   
-  showDeleteConfirmDialog.value = false
-  transactionToDelete.value = null
-  
   notify.success(t('invoice.transactionDeleted'))
-}
-
-function cancelDeleteTransaction() {
-  showDeleteConfirmDialog.value = false
-  transactionToDelete.value = null
 }
 
 function openAddTransactionDialog() {
@@ -564,6 +583,10 @@ function generateWhatsAppMessages() {
   })
 
   showWhatsAppDialog.value = true
+}
+
+function closeWhatsAppDialog() {
+  showWhatsAppDialog.value = false
 }
 
 async function copyToClipboard(participantId: string) {
@@ -996,9 +1019,16 @@ onMounted(async () => {
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="showWhatsAppDialog" max-width="800">
-      <v-card>
-        <v-card-title class="d-flex justify-space-between align-center">
+    <ModalBase
+      v-model="showWhatsAppDialog"
+      :title="t('invoice.whatsapp.title')"
+      :actions="whatsAppActions"
+      :max-width="800"
+      :fullscreen="isMobileOrTablet"
+      attach="body"
+    >
+      <template #title>
+        <div class="d-flex justify-space-between align-center w-100">
           <span>{{ t('invoice.whatsapp.title') }}</span>
           <v-btn
             color="primary"
@@ -1009,138 +1039,90 @@ onMounted(async () => {
           >
             {{ copiedParticipantId === 'all' ? t('invoice.whatsapp.copiedAll') : t('invoice.whatsapp.copyAll') }}
           </v-btn>
-        </v-card-title>
-        <v-card-text>
-          <v-expansion-panels>
-            <v-expansion-panel
-              v-for="participant in participants.filter(p => (totalsByParticipant[p.id] || 0) !== 0)"
-              :key="participant.id"
-            >
-              <v-expansion-panel-title>
-                <div class="d-flex align-center justify-space-between w-100 pr-4">
-                  <span class="font-weight-medium">
-                    {{ participant.name }}
-                  </span>
-                  <span class="text-success font-weight-bold">
-                    {{ (totalsByParticipant[participant.id] || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
-                  </span>
-                </div>
-              </v-expansion-panel-title>
-              <v-expansion-panel-text>
-                <v-textarea
-                  :model-value="generatedMessages[participant.id]"
-                  readonly
-                  variant="outlined"
-                  rows="10"
-                  class="mb-4"
-                />
-                <div class="d-flex gap-2">
-                  <v-btn
-                    color="primary"
-                    prepend-icon="mdi-content-copy"
-                    @click="copyToClipboard(participant.id)"
-                  >
-                    {{ copiedParticipantId === participant.id ? t('invoice.whatsapp.copied') : t('invoice.whatsapp.copy') }}
-                  </v-btn>
-                  <v-btn
-                    color="success"
-                    prepend-icon="mdi-whatsapp"
-                    @click="openWhatsApp(participant.id)"
-                  >
-                    {{ t('invoice.whatsapp.send') }}
-                  </v-btn>
-                </div>
-              </v-expansion-panel-text>
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn @click="showWhatsAppDialog = false">
-            {{ t('common.close') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        </div>
+      </template>
+      
+      <v-expansion-panels>
+        <v-expansion-panel
+          v-for="participant in participants.filter(p => (totalsByParticipant[p.id] || 0) !== 0)"
+          :key="participant.id"
+        >
+          <v-expansion-panel-title>
+            <div class="d-flex align-center justify-space-between w-100 pr-4">
+              <span class="font-weight-medium">
+                {{ participant.name }}
+              </span>
+              <span class="text-success font-weight-bold">
+                {{ (totalsByParticipant[participant.id] || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
+              </span>
+            </div>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <v-textarea
+              :model-value="generatedMessages[participant.id]"
+              readonly
+              variant="outlined"
+              rows="10"
+              class="mb-4"
+            />
+            <div class="d-flex gap-2">
+              <v-btn
+                color="primary"
+                prepend-icon="mdi-content-copy"
+                @click="copyToClipboard(participant.id)"
+              >
+                {{ copiedParticipantId === participant.id ? t('invoice.whatsapp.copied') : t('invoice.whatsapp.copy') }}
+              </v-btn>
+              <v-btn
+                color="success"
+                prepend-icon="mdi-whatsapp"
+                @click="openWhatsApp(participant.id)"
+              >
+                {{ t('invoice.whatsapp.send') }}
+              </v-btn>
+            </div>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </ModalBase>
 
-    <v-dialog v-model="showAddTransactionDialog" max-width="500">
-      <v-card>
-        <v-card-title class="text-h6">
-          {{ t('invoice.addTransaction') }}
-        </v-card-title>
-        <v-card-text>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field
-                v-model="newTransaction.date"
-                :label="t('invoice.date')"
-                type="date"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
-            <v-col cols="12">
-              <v-text-field
-                v-model="newTransaction.description"
-                :label="t('invoice.description')"
-                variant="outlined"
-                density="comfortable"
-                autofocus
-              />
-            </v-col>
-            <v-col cols="12">
-              <MoneyInput
-                v-model="newTransaction.amount"
-                :label="t('invoice.amount')"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
-          </v-row>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            @click="cancelAddTransaction"
-          >
-            {{ t('common.cancel') }}
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            @click="addTransaction"
-          >
-            {{ t('common.add') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="showDeleteConfirmDialog" max-width="400">
-      <v-card>
-        <v-card-title class="text-h6">
-          {{ t('invoice.split.confirmDelete') }}
-        </v-card-title>
-        <v-card-text>
-          {{ t('invoice.split.confirmDeleteMessage') }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            @click="cancelDeleteTransaction"
-          >
-            {{ t('common.no') }}
-          </v-btn>
-          <v-btn
-            color="error"
-            variant="flat"
-            @click="deleteTransaction"
-          >
-            {{ t('common.yes') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <ModalBase
+      v-model="showAddTransactionDialog"
+      :title="t('invoice.addTransaction')"
+      :actions="addTransactionActions"
+      :max-width="500"
+      :fullscreen="isMobileOrTablet"
+      attach="body"
+    >
+      <v-row>
+        <v-col cols="12">
+          <v-text-field
+            v-model="newTransaction.date"
+            :label="t('invoice.date')"
+            type="date"
+            variant="outlined"
+            density="comfortable"
+          />
+        </v-col>
+        <v-col cols="12">
+          <v-text-field
+            v-model="newTransaction.description"
+            :label="t('invoice.description')"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+          />
+        </v-col>
+        <v-col cols="12">
+          <MoneyInput
+            v-model="newTransaction.amount"
+            :label="t('invoice.amount')"
+            variant="outlined"
+            density="comfortable"
+          />
+        </v-col>
+      </v-row>
+    </ModalBase>
   </div>
   <div v-else class="d-flex justify-center align-center" style="height: 400px">
     <v-progress-circular indeterminate color="primary" />

@@ -42,8 +42,8 @@
       <ThemeToggle />
     </v-app-bar>
 
-    <v-main>
-      <v-container fluid>
+    <v-main style="overflow: hidden;">
+      <v-container fluid style="height: 100%; overflow: hidden;">
         <router-view />
       </v-container>
     </v-main>
