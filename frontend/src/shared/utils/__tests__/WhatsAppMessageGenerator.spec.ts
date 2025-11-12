@@ -36,6 +36,7 @@ describe('WhatsAppMessageGenerator', () => {
     id: 'invoice-1',
     cardId: 'card-1',
     dueDate: new Date('2024-02-15'),
+    totalAmount: 27263,
     status: InvoiceStatus.PENDING,
     transactions: [
       {
@@ -43,22 +44,24 @@ describe('WhatsAppMessageGenerator', () => {
         date: new Date('2024-01-20'),
         description: 'Mercado',
         amount: 20000, // R$ 200.00
-        splitMode: SplitMode.EQUAL,
         splits: [
-          { participantId: 'participant-1', amount: 10000 },
-          { participantId: 'participant-2', amount: 10000 }
-        ]
+          { participantId: 'participant-1', amount: 10000, mode: SplitMode.EQUAL_DIVISION },
+          { participantId: 'participant-2', amount: 10000, mode: SplitMode.EQUAL_DIVISION }
+        ],
+        createdAt: new Date('2024-01-20'),
+        updatedAt: new Date('2024-01-20')
       },
       {
         id: 'transaction-2',
         date: new Date('2024-01-22'),
         description: 'Farmácia',
         amount: 7263, // R$ 72.63
-        splitMode: SplitMode.CUSTOM,
         splits: [
-          { participantId: 'participant-1', amount: 3263 },
-          { participantId: 'participant-2', amount: 4000 }
-        ]
+          { participantId: 'participant-1', amount: 3263, mode: SplitMode.MANUAL },
+          { participantId: 'participant-2', amount: 4000, mode: SplitMode.MANUAL }
+        ],
+        createdAt: new Date('2024-01-22'),
+        updatedAt: new Date('2024-01-22')
       }
     ],
     createdAt: new Date('2024-01-01'),
@@ -221,7 +224,7 @@ describe('WhatsAppMessageGenerator', () => {
     });
 
     it('should handle single participant', () => {
-      const singleParticipant = [mockParticipants[0]];
+      const singleParticipant = [mockParticipants[0]!];
       const singleTotal = { 'participant-1': 13263 };
 
       const message = generateWhatsAppSummaryMessage(
@@ -243,7 +246,7 @@ describe('WhatsAppMessageGenerator', () => {
       const message = generateWhatsAppIndividualMessage(
         mockInvoice,
         mockCard,
-        mockParticipants[0],
+        mockParticipants[0]!,
         13263,
         getSplitValue
       );
@@ -255,7 +258,7 @@ describe('WhatsAppMessageGenerator', () => {
       const message = generateWhatsAppIndividualMessage(
         mockInvoice,
         mockCard,
-        mockParticipants[0],
+        mockParticipants[0]!,
         13263,
         getSplitValue
       );
@@ -268,7 +271,7 @@ describe('WhatsAppMessageGenerator', () => {
       const message = generateWhatsAppIndividualMessage(
         mockInvoice,
         mockCard,
-        mockParticipants[0],
+        mockParticipants[0]!,
         13263,
         getSplitValue
       );
@@ -283,7 +286,7 @@ describe('WhatsAppMessageGenerator', () => {
       const message = generateWhatsAppIndividualMessage(
         mockInvoice,
         mockCard,
-        mockParticipants[0],
+        mockParticipants[0]!,
         13263,
         getSplitValue
       );
@@ -295,7 +298,7 @@ describe('WhatsAppMessageGenerator', () => {
       const message = generateWhatsAppIndividualMessage(
         mockInvoice,
         mockCard,
-        mockParticipants[0],
+        mockParticipants[0]!,
         13263,
         getSplitValue
       );
@@ -307,7 +310,7 @@ describe('WhatsAppMessageGenerator', () => {
       const message = generateWhatsAppIndividualMessage(
         mockInvoice,
         mockCard,
-        mockParticipants[0],
+        mockParticipants[0]!,
         13263,
         getSplitValue
       );
@@ -326,7 +329,7 @@ describe('WhatsAppMessageGenerator', () => {
       const message = generateWhatsAppIndividualMessage(
         mockInvoice,
         mockCard,
-        mockParticipants[0],
+        mockParticipants[0]!,
         3263,
         customGetSplitValue
       );
