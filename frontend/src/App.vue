@@ -1,6 +1,14 @@
 <template>
   <v-app>
-    <v-navigation-drawer app rail expand-on-hover elevation="1">
+    <v-navigation-drawer 
+      v-model="drawer" 
+      app 
+      :permanent="isMdAndUp"
+      :rail="isMdAndUp"
+      :expand-on-hover="isMdAndUp"
+      :temporary="!isMdAndUp"
+      elevation="1"
+    >
       <v-list nav density="comfortable">
         <v-list-item
           v-for="item in navItems"
@@ -10,13 +18,19 @@
           :to="item.to"
           rounded="lg"
           color="primary"
+          @click="handleNavClick"
         />
       </v-list>
     </v-navigation-drawer>
 
     <v-app-bar app color="primary" density="comfortable">
+      <v-app-bar-nav-icon 
+        v-if="!isMdAndUp" 
+        @click="drawer = !drawer"
+        class="text-white"
+      />
       <v-toolbar-title>
-        <div class="d-flex">
+        <div class="d-flex align-center">
           <img
           :src="logoUrl"
           alt="App logo"
@@ -61,6 +75,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { navigateTo } from '@/presentation/router'
 import ImportInvoiceDialog from '@/presentation/components/ImportInvoiceDialog.vue'
 import { 
@@ -83,14 +98,23 @@ const LOCALE_STORAGE_KEY = 'invoicemanager:locale'
 const { t, locale } = useI18n()
 const router = useRouter()
 const themeStore = useThemeStore()
+const { mdAndUp } = useDisplay()
 const storageAvailable = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
 useThemeSync()
 
+const isMdAndUp = computed(() => mdAndUp.value)
+const drawer = ref(mdAndUp.value)
 const showImportDialog = ref(false)
 const floatingNotifyRef = ref()
 const loadingOverlayRef = ref()
 const confirmDialogRef = ref()
+
+function handleNavClick() {
+  if (!isMdAndUp.value) {
+    drawer.value = false
+  }
+}
 
 const navItems = computed(() => [
   { icon: 'mdi-home', title: t('nav.home'), to: '/' },

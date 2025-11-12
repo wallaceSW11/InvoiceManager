@@ -222,8 +222,8 @@ export default {
   },
   import: {
     title: 'Importar Dados',
-    description: 'Selecione os arquivos JSON para importar. Os dados existentes serão atualizados ou novos serão criados.',
-    warning: 'Atenção: Se um registro com o mesmo ID já existir, ele será atualizado com os dados do arquivo.',
+    description: 'Selecione os arquivos JSON para importar. Os dados do tipo selecionado serão substituídos.',
+    warning: 'ATENÇÃO: Ao importar, todos os dados existentes do tipo selecionado (Cartões, Participantes ou Faturas) serão excluídos e substituídos pelos dados do arquivo.',
     cards: 'Cartões',
     participants: 'Participantes',
     invoices: 'Faturas',

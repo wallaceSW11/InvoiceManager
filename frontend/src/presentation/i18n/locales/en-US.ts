@@ -222,8 +222,8 @@ export default {
   },
   import: {
     title: 'Import Data',
-    description: 'Select JSON files to import. Existing data will be updated or new ones will be created.',
-    warning: 'Warning: If a record with the same ID already exists, it will be updated with the file data.',
+    description: 'Select JSON files to import. Data of the selected type will be replaced.',
+    warning: 'WARNING: When importing, all existing data of the selected type (Cards, Participants or Invoices) will be deleted and replaced with the file data.',
     cards: 'Cards',
     participants: 'Participants',
     invoices: 'Invoices',
