@@ -52,14 +52,14 @@ const participants = computed(() => participantStore.participants);
 
 const addTransactionActions = computed<ModalAction[]>(() => [
   {
-    text: t('common.cancel'),
-    color: 'grey',
-    handler: () => cancelAddTransaction()
-  },
-  {
     text: t('common.add'),
     color: 'primary',
     handler: () => addTransaction()
+  },
+  {
+    text: t('common.cancel'),
+    color: 'grey',
+    handler: () => cancelAddTransaction()
   }
 ]);
 
@@ -73,14 +73,14 @@ const whatsAppActions = computed<ModalAction[]>(() => [
 
 const editDescriptionActions = computed<ModalAction[]>(() => [
   {
-    text: t('common.cancel'),
-    color: 'grey',
-    handler: () => cancelEditDescription()
-  },
-  {
     text: t('common.save'),
     color: 'primary',
     handler: () => saveTransactionDescription()
+  },
+  {
+    text: t('common.cancel'),
+    color: 'grey',
+    handler: () => cancelEditDescription()
   }
 ]);
 const card = computed(() => {
@@ -866,7 +866,7 @@ onMounted(async () => {
                 </v-tooltip>
               </th>
               <th
-                class="text-left"
+                class="text-center"
                 style="min-width: 100px"
               >
                 {{ t('invoice.date') }}
@@ -878,7 +878,7 @@ onMounted(async () => {
                 {{ t('invoice.description') }}
               </th>
               <th
-                class="text-right"
+                class="text-center"
                 style="min-width: 120px"
               >
                 {{ t('invoice.total') }}
@@ -925,20 +925,11 @@ onMounted(async () => {
                   <span>{{ t('invoice.split.deleteTransaction') }}</span>
                 </v-tooltip>
               </td>
-              <td class="text-no-wrap">
+              <td class="text-center text-no-wrap">
                 {{ new Date(transaction.date).toLocaleDateString('pt-BR') }}
               </td>
-              <td
-                class="text-truncate"
-                style="max-width: 200px"
-              >
+              <td style="max-width: 200px">
                 <div class="d-flex align-center gap-1">
-                  <v-tooltip location="top">
-                    <template #activator="{ props }">
-                      <span v-bind="props">{{ transaction.description }}</span>
-                    </template>
-                    <span>{{ transaction.description }}</span>
-                  </v-tooltip>
                   <v-tooltip location="top">
                     <template #activator="{ props }">
                       <v-btn
@@ -952,12 +943,20 @@ onMounted(async () => {
                     </template>
                     <span>{{ t('invoice.split.editDescription') }}</span>
                   </v-tooltip>
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <span v-bind="props" class="text-truncate" style="display: block">
+                        {{ transaction.description }}
+                      </span>
+                    </template>
+                    <span>{{ transaction.description }}</span>
+                  </v-tooltip>
                 </div>
               </td>
-              <td class="text-right font-weight-bold text-no-wrap">
+              <td class="text-center font-weight-bold text-no-wrap">
                 <div
                   v-if="!isTransactionAmountEditable(transaction.id)"
-                  class="d-flex align-center justify-end gap-1"
+                  class="d-flex align-center justify-center gap-1"
                 >
                   <span>
                     {{
@@ -1169,7 +1168,7 @@ onMounted(async () => {
                 style="min-width: 200px"
               ></td>
               <td
-                class="text-right font-weight-bold text-h6"
+                class="text-center font-weight-bold text-h6"
                 style="min-width: 120px"
               >
                 {{ grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
