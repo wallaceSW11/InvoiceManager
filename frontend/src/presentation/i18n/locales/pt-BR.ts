@@ -181,6 +181,7 @@ export default {
       totals: 'Totais',
       noParticipantsSelected: 'Selecione os participantes para começar a dividir os valores',
       editAmount: 'Editar valor do lançamento',
+      editDescription: 'Editar descrição',
       saveAmount: 'Salvar valor',
       invalidAmount: 'Valor inválido',
       amountUpdated: 'Valor do lançamento atualizado. Os valores dos participantes foram limpos.',
@@ -210,7 +211,9 @@ export default {
     saveError: 'Falha ao salvar a fatura',
     transactionDeleted: 'Lançamento excluído',
     addTransaction: 'Adicionar Lançamento',
-    transactionAdded: 'Lançamento adicionado'
+    transactionAdded: 'Lançamento adicionado',
+    descriptionUpdated: 'Descrição atualizada',
+    descriptionRequired: 'Descrição é obrigatória'
   },
   export: {
     title: 'Exportar Dados',
