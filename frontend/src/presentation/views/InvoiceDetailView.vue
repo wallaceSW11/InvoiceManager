@@ -43,6 +43,9 @@ const newTransaction = ref<{
   description: '',
   amount: 0
 });
+const showEditDescriptionDialog = ref(false);
+const editingTransactionId = ref<string | null>(null);
+const tempTransactionDescription = ref('');
 
 const invoice = computed(() => invoiceStore.currentInvoice);
 const participants = computed(() => participantStore.participants);
@@ -65,6 +68,19 @@ const whatsAppActions = computed<ModalAction[]>(() => [
     text: t('common.close'),
     color: 'grey',
     handler: () => closeWhatsAppDialog()
+  }
+]);
+
+const editDescriptionActions = computed<ModalAction[]>(() => [
+  {
+    text: t('common.cancel'),
+    color: 'grey',
+    handler: () => cancelEditDescription()
+  },
+  {
+    text: t('common.save'),
+    color: 'primary',
+    handler: () => saveTransactionDescription()
   }
 ]);
 const card = computed(() => {
@@ -442,6 +458,40 @@ function deleteTransaction(transactionId: string) {
   notify.success(t('invoice.transactionDeleted'));
 }
 
+function openEditDescriptionDialog(transactionId: string) {
+  const transaction = invoice.value?.transactions.find((t) => t.id === transactionId);
+  if (!transaction) return;
+
+  editingTransactionId.value = transactionId;
+  tempTransactionDescription.value = transaction.description;
+  showEditDescriptionDialog.value = true;
+}
+
+function cancelEditDescription() {
+  showEditDescriptionDialog.value = false;
+  editingTransactionId.value = null;
+  tempTransactionDescription.value = '';
+}
+
+function saveTransactionDescription() {
+  if (!invoice.value || !editingTransactionId.value) return;
+
+  if (!tempTransactionDescription.value.trim()) {
+    notify.error(t('invoice.descriptionRequired'));
+    return;
+  }
+
+  const transaction = invoice.value.transactions.find((t) => t.id === editingTransactionId.value);
+  if (!transaction) return;
+
+  transaction.description = tempTransactionDescription.value.trim();
+  showEditDescriptionDialog.value = false;
+  editingTransactionId.value = null;
+  tempTransactionDescription.value = '';
+
+  notify.success(t('invoice.descriptionUpdated'));
+}
+
 function openAddTransactionDialog() {
   newTransaction.value = {
     date: new Date().toISOString().split('T')[0]!,
@@ -464,7 +514,7 @@ async function addTransaction() {
   if (!invoice.value) return;
 
   if (!newTransaction.value.description.trim()) {
-    notify.error(t('invoice.description') + ' é obrigatória');
+    notify.error(t('invoice.descriptionRequired'));
     return;
   }
 
@@ -882,12 +932,27 @@ onMounted(async () => {
                 class="text-truncate"
                 style="max-width: 200px"
               >
-                <v-tooltip location="top">
-                  <template #activator="{ props }">
-                    <span v-bind="props">{{ transaction.description }}</span>
-                  </template>
-                  <span>{{ transaction.description }}</span>
-                </v-tooltip>
+                <div class="d-flex align-center gap-1">
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <span v-bind="props">{{ transaction.description }}</span>
+                    </template>
+                    <span>{{ transaction.description }}</span>
+                  </v-tooltip>
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="mdi-pencil"
+                        size="x-small"
+                        variant="text"
+                        :disabled="isCompleted"
+                        @click="openEditDescriptionDialog(transaction.id)"
+                      />
+                    </template>
+                    <span>{{ t('invoice.split.editDescription') }}</span>
+                  </v-tooltip>
+                </div>
               </td>
               <td class="text-right font-weight-bold text-no-wrap">
                 <div
@@ -1257,6 +1322,25 @@ onMounted(async () => {
           />
         </v-col>
       </v-row>
+    </ModalBase>
+
+    <ModalBase
+      v-model="showEditDescriptionDialog"
+      :title="t('invoice.description')"
+      :actions="editDescriptionActions"
+      :max-width="500"
+      :fullscreen="isMobileOrTablet"
+      attach="body"
+    >
+      <v-text-field
+        v-model="tempTransactionDescription"
+        :label="t('invoice.description')"
+        variant="outlined"
+        density="comfortable"
+        maxlength="50"
+        counter="50"
+        autofocus
+      />
     </ModalBase>
   </div>
   <div

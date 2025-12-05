@@ -181,6 +181,7 @@ export default {
       totals: 'Totals',
       noParticipantsSelected: 'Select participants to start splitting values',
       editAmount: 'Edit transaction amount',
+      editDescription: 'Edit description',
       saveAmount: 'Save amount',
       invalidAmount: 'Invalid amount',
       amountUpdated: 'Transaction amount updated. Participant values have been cleared.',
@@ -210,7 +211,9 @@ export default {
     saveError: 'Failed to save invoice',
     transactionDeleted: 'Transaction deleted',
     addTransaction: 'Add Transaction',
-    transactionAdded: 'Transaction added'
+    transactionAdded: 'Transaction added',
+    descriptionUpdated: 'Description updated',
+    descriptionRequired: 'Description is required'
   },
   export: {
     title: 'Export Data',
